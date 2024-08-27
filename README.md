@@ -4,7 +4,7 @@
 
 Keep your favourite stardew pets with you while coding.
 
-![alt text](src/pets.png)
+![alt text](https://raw.githubusercontent.com/BOTPanzer/Stardew-Pets/main/pets.png)
 
 ## How to use
 
