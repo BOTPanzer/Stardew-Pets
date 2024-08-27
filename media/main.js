@@ -155,6 +155,11 @@ function showMouse(show) {
   game.mouse.div.style.opacity = show ? 1 : 0;
 }
 
+game.div.onclick = (event) => {
+  game.gifting = false;
+  showMouse(false);
+}
+
 game.div.onmousemove = (event) => {
   game.mouse.pos = new Vec2(event.clientX, event.clientY);
   game.mouse.div.style.left = game.mouse.pos.x + 'px';

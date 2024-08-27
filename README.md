@@ -9,7 +9,7 @@ Keep your favourite stardew pets with you while coding.
 ## How to use
 
 Stardew Pets can be found at the explorer panel.  
-In case it does not appear, try right clicking in the background and see if it is disabled.
+In case it does not appear, try right clicking in the "EXPLORER" title on top and see if it is disabled.
 
 ## Pets
 

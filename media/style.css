@@ -53,9 +53,10 @@ html, body {
   background-position-x: var(--pos-x);
   background-position-y: var(--pos-y);
 
-  transform: scale(var(--scale)) translateX(calc(var(--size) / -2)) translateY(calc(var(--size) / -2));
+  transform: scale(var(--scale)) translateX(-2px) translateY(-2px);
 
   pointer-events: none;
+  opacity: 0;
 }
 
 

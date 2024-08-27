@@ -75,10 +75,30 @@ class PetItem {
     }
 }
 //Save & load pets
+function loadPetsFile() {
+    if (fs.existsSync(petsPath)) {
+        //Read pets from pets.json
+        try {
+            //Try to read pets file
+            pets = JSON.parse(fs.readFileSync(petsPath, 'utf8'));
+            if (!Array.isArray(pets))
+                pets = new Array();
+        }
+        catch (e) {
+            //Failed -> Reset pets
+            pets = new Array();
+        }
+    }
+    else {
+        //Create pets.json file
+        savePets();
+    }
+}
 function savePets() {
     fs.writeFileSync(petsPath, JSON.stringify(pets, null, 2));
 }
 function loadPet(pet) {
+    //Sends a pet to the webview
     webview.postMessage({
         type: 'add',
         specie: pet.specie,
@@ -86,6 +106,7 @@ function loadPet(pet) {
         color: pet.color,
     });
 }
+//Add & remove pets
 function addPet(pet) {
     //Add to list & save json
     pets.push(pet);
@@ -93,7 +114,7 @@ function addPet(pet) {
     //load pet in webview
     loadPet(pet);
 }
-function removePet(index) {
+function removePet(index, save) {
     //Remove from pets
     pets.splice(index, 1);
     //Remove from webview
@@ -102,7 +123,8 @@ function removePet(index) {
         index: index,
     });
     //Save pets
-    savePets();
+    if (save)
+        savePets();
 }
 /*$$$$$              /$$     /$$                       /$$
 /$$__  $$            | $$    |__/                      | $$
@@ -126,23 +148,7 @@ function activate(context) {
     extensionPath = context.extensionPath;
     petsPath = extensionPath + '/pets.json';
     //Load pets array
-    if (fs.existsSync(petsPath)) {
-        //Read pets from pets.json
-        try {
-            //Try to read pets file
-            pets = JSON.parse(fs.readFileSync(petsPath, 'utf8'));
-            if (!Array.isArray(pets))
-                pets = new Array();
-        }
-        catch (e) {
-            //Failed -> Reset pets
-            pets = new Array();
-        }
-    }
-    else {
-        //Create pets.json file
-        savePets();
-    }
+    loadPetsFile();
     /*$      /$$           /$$       /$$    /$$ /$$
    | $$  /$ | $$          | $$      | $$   | $$|__/
    | $$ /$$$| $$  /$$$$$$ | $$$$$$$ | $$   | $$ /$$  /$$$$$$  /$$  /$$  /$$
@@ -180,9 +186,6 @@ function activate(context) {
   |  $$$$$$/|  $$$$$$/| $$ | $$ | $$| $$ | $$ | $$|  $$$$$$$| $$  | $$|  $$$$$$$ /$$$$$$$/
    \______/  \______/ |__/ |__/ |__/|__/ |__/ |__/ \_______/|__/  |__/ \_______/|______*/
     //The commands have to be defined in package.json in order to be added here
-    const commandGift = vscode.commands.registerCommand('stardew-pets.gift', async () => {
-        webview.postMessage({ type: 'gift' });
-    });
     const commandAddPet = vscode.commands.registerCommand('stardew-pets.addPet', async () => {
         //Ask for a specie
         const specie = await vscode.window.showQuickPick(Object.keys(species), {
@@ -249,14 +252,33 @@ function activate(context) {
         if (pet == null)
             return;
         //Remove pet
-        removePet(pet.index);
+        removePet(pet.index, true);
         //Bye pet!
         vscode.window.showInformationMessage('Bye ' + pet.label + '!');
     });
-    const commandSettings = vscode.commands.registerCommand('stardew-pets.settings', async () => {
-        vscode.commands.executeCommand('workbench.action.openSettings', 'StardewPets');
+    const commandGift = vscode.commands.registerCommand('stardew-pets.gift', async () => {
+        webview.postMessage({ type: 'gift' });
     });
-    context.subscriptions.push(commandGift, commandAddPet, commandRemovePet, commandSettings);
+    const commandSettings = vscode.commands.registerCommand('stardew-pets.settings', async () => {
+        //vscode.commands.executeCommand('workbench.action.openSettings', 'StardewPets');
+        vscode.commands.executeCommand('workbench.action.openSettings', '@ext:Botpa.stardew-pets');
+    });
+    const commandOpenPetsFile = vscode.commands.registerCommand('stardew-pets.openPetsFile', async () => {
+        const uri = vscode.Uri.file(petsPath);
+        const success = await vscode.commands.executeCommand('vscode.openFolder', uri);
+    });
+    const commandReloadPetsFile = vscode.commands.registerCommand('stardew-pets.reloadPetsFile', async () => {
+        //Remove all pets
+        const petsLength = pets.length;
+        for (let i = 0; i < petsLength; i++)
+            removePet(0, false);
+        //Reload pets file
+        loadPetsFile();
+        //Load pets
+        for (let i = 0; i < pets.length; i++)
+            loadPet(pets[i]);
+    });
+    context.subscriptions.push(commandAddPet, commandRemovePet, commandGift, commandSettings, commandOpenPetsFile, commandReloadPetsFile);
 }
 /*$$$$$$                                  /$$     /$$                       /$$
 | $$__  $$                                | $$    |__/                      | $$
