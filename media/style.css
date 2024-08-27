@@ -1,0 +1,459 @@
+/* html */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  image-rendering: pixelated;
+
+  --scale: 1;
+}
+
+
+
+/* pets parent div (also the background) */
+#pets, #pets[background="grass"] {
+  width: calc(100% / var(--scale));
+  height: calc(100% / var(--scale));
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform-origin: 0% 0%;
+
+  transform: scale(var(--scale));
+  background-repeat: repeat;
+  background: url(./background/grass.png);
+}
+
+#pets[background="sand"] {
+  background: url(./background/sand.png);
+}
+
+#pets[background="dirt"] {
+  background: url(./background/dirt.png);
+}
+
+
+
+/* mouse */
+#mouse {
+  --size: 9px;
+  width: var(--size);
+  height: var(--size);
+  
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  background-image: url(./emotes.png);
+  --pos-x: calc(-12 * var(--size));
+  --pos-y: calc(-10 * var(--size));
+  background-position-x: var(--pos-x);
+  background-position-y: var(--pos-y);
+
+  transform: scale(var(--scale)) translateX(calc(var(--size) / -2)) translateY(calc(var(--size) / -2));
+
+  pointer-events: none;
+}
+
+
+
+/* base class for pets */
+.pet {
+  --size: 32px;
+  width: var(--size);
+  height: var(--size);
+
+  position: absolute;
+  --position-x: 0px; 
+  --position-y: 0px; 
+  left: var(--position-x);
+  bottom: var(--position-y);
+
+  --image: url(./cat/black.png);
+  background-image: var(--image);
+  --offset-x: 0px;
+  --offset-y: 0px;
+  background-position-x: var(--offset-x);
+  background-position-y: var(--offset-y);
+  
+  --emoteSize: 9px;
+  --emoteElevation: 0px;
+  --emote-x: 0px;
+  --emote-y: 0px;
+}
+
+.pet[flip] {
+  transform: scale(-1, 1);
+}
+
+
+
+/* pet moods */
+.pet::after {
+  content: '';
+
+  width: var(--emoteSize);
+  height: var(--emoteSize);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  background-image: url(emotes.png);
+  background-position-x: var(--emote-x);
+  background-position-y: var(--emote-y);
+
+  --translation-x: calc((var(--size) - var(--emoteSize)) / 2);
+  --translation-y: calc(-1 * var(--emoteSize) - var(--emoteElevation));
+  transform: translateX(var(--translation-x)) translateY(var(--translation-y));
+  transform-origin: center;
+
+  pointer-events: none;
+  opacity: 0;
+}
+
+.pet[flip]::after {
+  transform: translateX(var(--translation-x)) translateY(var(--translation-y)) scale(-1, 1);
+}
+
+.pet[mood]::after {
+  opacity: 1;
+} 
+
+.pet[mood="heart"] {
+  --emote-x: calc(-1 * var(--emoteSize));
+  --emote-y: calc(-3 * var(--emoteSize));
+}
+
+.pet[mood="gigachad"] {
+  --emote-x: calc(-11 * var(--emoteSize));
+  --emote-y: calc(-1 * var(--emoteSize));
+}
+
+.pet[mood="happy"] {
+  --emote-x: calc(-0 * var(--emoteSize));
+  --emote-y: calc(-0 * var(--emoteSize));
+}
+
+.pet[mood="mad"] {
+  --emote-x: calc(-2 * var(--emoteSize));
+  --emote-y: calc(-1 * var(--emoteSize));
+}
+
+.pet[mood="alien"] {
+  --emote-x: calc(-1 * var(--emoteSize));
+  --emote-y: calc(-2 * var(--emoteSize));
+}
+
+.pet[mood="pledge"] {
+  --emote-x: calc(-8 * var(--emoteSize));
+  --emote-y: calc(-1 * var(--emoteSize));
+}
+
+
+
+/* cats */
+.cat, .cat[color="black"] {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: -9px;
+  --image: url("./cat/black.png");
+}
+
+.cat[color="orange"] {
+  --image: url("./cat/orange.png");
+}
+
+.cat[color="gray"] {
+  --image: url("./cat/gray.png");
+}
+
+.cat[color="purple"] {
+  --image: url("./cat/purple.png");
+}
+
+.cat[color="white"] {
+  --image: url("./cat/white.png");
+}
+
+.cat[color="yellow"] {
+  --image: url("./cat/yellow.png");
+}
+
+
+
+/* dogs */
+.dog, .dog[color="blonde"] {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: -5px;
+  --image: url(./dog/blonde.png);
+}
+
+.dog[color="brown"] {
+  --image: url(./dog/brown.png);
+}
+
+.dog[color="dark brown"] {
+  --image: url(./dog/dark-brown.png);
+}
+
+.dog[color="gray"] {
+  --image: url(./dog/gray.png);
+}
+
+.dog[color="light brown"] {
+  --image: url(./dog/light-brown.png);
+}
+
+.dog[color="purple"] {
+  --image: url(./dog/purple.png);
+}
+
+
+
+/* raccoon */
+.raccoon {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: -2px;
+  --image: url(./raccoon/raccoon.png);
+}
+
+
+
+/* dino */
+.dino {
+  --size: 16px;
+  --size: 16px;
+  --emoteElevation: 2px;
+  --image: url(./dino/dino.png);
+}
+
+
+
+/* turtle */
+.turtle, .turtle[color="green"] {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: -10px;
+  --image: url(./turtle/green.png);
+}
+
+.turtle[color="brown"] {
+  --image: url(./turtle/purple.png);
+}
+
+
+
+/* goat */
+.goat, .goat[color="adult"] {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: -2px;
+  --image: url(./goat/adult.png);
+}
+
+.goat[color="baby"] {
+  --emoteElevation: -6px;
+  --image: url(./goat/baby.png);
+}
+
+
+
+/* sheep */
+.sheep, .sheep[color="adult"] {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: -3px;
+  --image: url(./sheep/adult.png);
+}
+
+.sheep[color="baby"] {
+  --emoteElevation: -6px;
+  --image: url(./sheep/baby.png);
+}
+
+
+
+/* ostrich */
+.ostrich, .ostrich[color="adult"] {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: 3px;
+  --image: url(./ostrich/adult.png);
+}
+
+.ostrich[color="baby"] {
+  --emoteElevation: -10px;
+  --image: url(./ostrich/baby.png);
+}
+
+
+
+/* pig */
+.pig, .pig[color="adult"] {
+  --size: 32px;
+  --size: 32px;
+  --image: url(./pig/adult.png);
+}
+
+.pig[color="baby"] {
+  --emoteElevation: -3px;
+  --image: url(./pig/baby.png);
+}
+
+
+
+/* rabbit */
+.rabbit, .rabbit[color="adult"] {
+  --size: 16px;
+  --size: 16px;
+  --emoteElevation: 2px;
+  --image: url(./rabbit/adult.png);
+}
+
+.rabbit[color="baby"] {
+  --emoteElevation: 0px;
+  --image: url(./rabbit/baby.png);
+}
+
+
+
+/* chicken */
+.chicken, .chicken[color="white adult"] {
+  --size: 16px;
+  --size: 16px;
+  --emoteElevation: 2px;
+  --image: url(./chicken/white.png);
+}
+
+.chicken[color="black adult"] {
+  --image: url(./chicken/black.png);
+}
+
+.chicken[color="blue adult"] {
+  --image: url(./chicken/blue.png);
+}
+
+.chicken[color="brown adult"] {
+  --image: url(./chicken/brown.png);
+}
+
+.chicken[color*="baby"] {
+  --emoteElevation: -4px;
+}
+
+.chicken[color="white baby"] {
+  --image: url(./chicken/baby-white.png);
+}
+
+.chicken[color="black baby"] {
+  --image: url(./chicken/baby-black.png);
+}
+
+.chicken[color="blue baby"] {
+  --image: url(./chicken/baby-blue.png);
+}
+
+.chicken[color="brown baby"] {
+  --image: url(./chicken/baby-brown.png);
+}
+
+
+
+/* cow */
+.cow, .cow[color="white adult"] {
+  --size: 32px;
+  --size: 32px;
+  --emoteElevation: -4px;
+  --image: url(./cow/white.png);
+}
+
+.cow[color="brown adult"] {
+  --image: url(./cow/brown.png);
+}
+
+.cow[color*="baby"] {
+  --emoteElevation: -6px;
+}
+
+.cow[color="white baby"] {
+  --image: url(./cow/baby-white.png);
+}
+
+.cow[color="brown baby"] {
+  --image: url(./cow/baby-brown.png);
+}
+
+
+
+/* junimo - filters: brightness(0) + https://isotropic.co/tool/hex-color-to-css-filter/ */ 
+.junimo, .junimo[color="white"] {
+  --size: 16px;
+  --size: 16px;
+  --emoteElevation: 1px;
+  --image: url(./junimo/junimo.png);
+}
+
+.junimo:before, .junimo[color="white"]:before {
+  content: '';
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+
+  background-image: var(--image);
+  background-position-x: var(--offset-x);
+  background-position-y: var(--offset-y);
+
+  filter: brightness(0) invert(100%);
+  mix-blend-mode: multiply;
+}
+ 
+.junimo[color="black"]:before {
+  filter: brightness(0) invert(16%) sepia(8%) saturate(173%) hue-rotate(97deg) brightness(93%) contrast(86%);
+}
+
+.junimo[color="gray"]:before {
+  filter: brightness(0) invert(59%) sepia(4%) saturate(323%) hue-rotate(182deg) brightness(89%) contrast(88%);
+}
+
+.junimo[color="pink"]:before {
+  filter: brightness(0) invert(88%) sepia(58%) saturate(6754%) hue-rotate(256deg) brightness(103%) contrast(106%);
+}
+
+.junimo[color="red"]:before {
+  filter: brightness(0) invert(9%) sepia(100%) saturate(7382%) hue-rotate(358deg) brightness(90%) contrast(103%);
+}
+
+.junimo[color="orange"]:before {
+  filter: brightness(0) invert(45%) sepia(83%) saturate(954%) hue-rotate(360deg) brightness(106%) contrast(102%);
+}
+
+.junimo[color="yellow"]:before {
+  filter: brightness(0) invert(92%) sepia(55%) saturate(5413%) hue-rotate(342deg) brightness(105%) contrast(101%);
+}
+
+.junimo[color="green"]:before {
+  filter: brightness(0) invert(63%) sepia(41%) saturate(5613%) hue-rotate(82deg) brightness(120%) contrast(122%);
+}
+
+.junimo[color="cyan"]:before {
+  filter: brightness(0) invert(84%) sepia(98%) saturate(1528%) hue-rotate(109deg) brightness(103%) contrast(97%);
+}
+
+.junimo[color="purple"]:before {
+  filter: brightness(0) invert(13%) sepia(100%) saturate(5495%) hue-rotate(280deg) brightness(86%) contrast(111%);
+}
+
+.junimo[color="brown"]:before {
+  filter: brightness(0) invert(33%) sepia(93%) saturate(772%) hue-rotate(358deg) brightness(97%) contrast(99%);
+}

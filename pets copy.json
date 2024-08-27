@@ -1,0 +1,42 @@
+[
+  {
+    "specie": "raccoon",
+    "name": "Alex",
+    "color": ""
+  },
+  {
+    "specie": "goat",
+    "name": "Rodri",
+    "color": "adult"
+  },
+  {
+    "specie": "cat",
+    "name": "lau",
+    "color": "gray"
+  },
+  {
+    "specie": "dog",
+    "name": "Adri",
+    "color": "blonde"
+  },
+  {
+    "specie": "cat",
+    "name": "Nadia",
+    "color": "black"
+  },
+  {
+    "specie": "sheep",
+    "name": "Chao",
+    "color": "baby"
+  },
+  {
+    "specie": "dog",
+    "name": "Ángela",
+    "color": "gray"
+  },
+  {
+    "specie": "junimo",
+    "name": "Alex",
+    "color": ""
+  }
+]
