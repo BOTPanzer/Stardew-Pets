@@ -2,17 +2,48 @@
   "name": "stardew-pets",
   "displayName": "Stardew Pets",
   "description": "Stardew Valley pets for VSCode",
+  "version": "1.0.0",
+  "publisher": "Botpa",
   "author": {
     "name": "Botpa"
   },
-  "publisher": "Botpa",
-  "version": "1.0.0",
-  "engines": {
-    "vscode": "^1.92.0"
+
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#45a319",
+    "theme": "dark"
   },
+  "pricing": "Free",
+  "keywords": [
+    "stardew",
+    "valley",
+    "stardew valley",
+    "pets",
+    "cat",
+    "cog",
+    "dino",
+    "turtle",
+    "raccoon",
+    "goat",
+    "sheep",
+    "ostrich",
+    "pig",
+    "rabbit",
+    "chicken",
+    "cow",
+    "junimo"
+  ],
   "categories": [
     "Other"
   ],
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/BOTPanzer/Stardew-Pets"
+  },
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
