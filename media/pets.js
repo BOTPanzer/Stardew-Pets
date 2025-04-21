@@ -517,7 +517,7 @@ class Pet {
 class PetSmall extends Pet {
   
   //Pet data
-  size = new Vec2(16);
+  size = new Vec2(20);
 
   constructor(name, color) {
     super(name, color);

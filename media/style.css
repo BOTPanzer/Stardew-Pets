@@ -295,8 +295,8 @@ html, body {
 
 /* dino */
 .dino {
-  --size: 16px;
-  --size: 16px;
+  --size: 20px;
+  --size: 20px;
   --emoteElevation: 2px;
   --image: url(./animals/dino/dino.png);
 }
@@ -305,8 +305,8 @@ html, body {
 
 /* duck */
 .duck {
-  --size: 16px;
-  --size: 16px;
+  --size: 20px;
+  --size: 20px;
   --emoteElevation: 2px;
   --image: url(./animals/duck/duck.png);
 }
@@ -398,8 +398,8 @@ html, body {
 
 /* rabbit */
 .rabbit, .rabbit[color="adult"] {
-  --size: 16px;
-  --size: 16px;
+  --size: 20px;
+  --size: 20px;
   --emoteElevation: 2px;
   --image: url(./animals/rabbit/adult.png);
 }
@@ -413,8 +413,8 @@ html, body {
 
 /* chicken */
 .chicken, .chicken[color="white adult"] {
-  --size: 16px;
-  --size: 16px;
+  --size: 20px;
+  --size: 20px;
   --emoteElevation: 2px;
   --image: url(./animals/chicken/white.png);
 }
@@ -481,8 +481,8 @@ html, body {
 
 /* junimo - filters: brightness(0) + https://isotropic.co/tool/hex-color-to-css-filter/ */ 
 .junimo, .junimo[color="white"] {
-  --size: 16px;
-  --size: 16px;
+  --size: 20px;
+  --size: 20px;
   --emoteElevation: 1px;
   --image: url(./animals/junimo/junimo.png);
 }
