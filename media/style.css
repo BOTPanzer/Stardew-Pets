@@ -477,69 +477,49 @@ html, body {
   --image: url(./animals/cow/baby-brown.png);
 }
 
-
-
-/* junimo - filters: brightness(0) + https://isotropic.co/tool/hex-color-to-css-filter/ */ 
 .junimo, .junimo[color="white"] {
   --size: 20px;
   --size: 20px;
   --emoteElevation: 1px;
-  --image: url(./animals/junimo/junimo.png);
-}
-
-.junimo:before, .junimo[color="white"]:before {
-  content: '';
-
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-
-  background-image: var(--image);
-  background-position-x: var(--offset-x);
-  background-position-y: var(--offset-y);
-
-  filter: brightness(0) invert(100%);
-  mix-blend-mode: multiply;
+  --image: url(./animals/junimo/junimo-white.png);
 }
  
-.junimo[color="black"]:before {
-  filter: brightness(0) invert(16%) sepia(8%) saturate(173%) hue-rotate(97deg) brightness(93%) contrast(86%);
+.junimo[color="black"] {
+  --image: url(./animals/junimo/junimo-black.png);
 }
 
-.junimo[color="gray"]:before {
-  filter: brightness(0) invert(59%) sepia(4%) saturate(323%) hue-rotate(182deg) brightness(89%) contrast(88%);
+.junimo[color="gray"] {
+  --image: url(./animals/junimo/junimo-gray.png);
 }
 
-.junimo[color="pink"]:before {
-  filter: brightness(0) invert(88%) sepia(58%) saturate(6754%) hue-rotate(256deg) brightness(103%) contrast(106%);
+.junimo[color="pink"] {
+  --image: url(./animals/junimo/junimo-pink.png);
 }
 
-.junimo[color="red"]:before {
-  filter: brightness(0) invert(9%) sepia(100%) saturate(7382%) hue-rotate(358deg) brightness(90%) contrast(103%);
+.junimo[color="red"] {
+  --image: url(./animals/junimo/junimo-red.png);
 }
 
-.junimo[color="orange"]:before {
-  filter: brightness(0) invert(45%) sepia(83%) saturate(954%) hue-rotate(360deg) brightness(106%) contrast(102%);
+.junimo[color="orange"] {
+  --image: url(./animals/junimo/junimo-orange.png);
 }
 
-.junimo[color="yellow"]:before {
-  filter: brightness(0) invert(92%) sepia(55%) saturate(5413%) hue-rotate(342deg) brightness(105%) contrast(101%);
+.junimo[color="yellow"] {
+  --image: url(./animals/junimo/junimo-yellow.png);
 }
 
-.junimo[color="green"]:before {
-  filter: brightness(0) invert(63%) sepia(41%) saturate(5613%) hue-rotate(82deg) brightness(120%) contrast(122%);
+.junimo[color="green"] {
+  --image: url(./animals/junimo/junimo-green.png);
 }
 
-.junimo[color="cyan"]:before {
-  filter: brightness(0) invert(84%) sepia(98%) saturate(1528%) hue-rotate(109deg) brightness(103%) contrast(97%);
+.junimo[color="cyan"] {
+  --image: url(./animals/junimo/junimo-cyan.png);
 }
 
-.junimo[color="purple"]:before {
-  filter: brightness(0) invert(13%) sepia(100%) saturate(5495%) hue-rotate(280deg) brightness(86%) contrast(111%);
+.junimo[color="purple"] {
+  --image: url(./animals/junimo/junimo-purple.png);
 }
 
-.junimo[color="brown"]:before {
-  filter: brightness(0) invert(33%) sepia(93%) saturate(772%) hue-rotate(358deg) brightness(97%) contrast(99%);
+.junimo[color="brown"] {
+  --image: url(./animals/junimo/junimo-brown.png);
 }
