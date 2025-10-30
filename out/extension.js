@@ -41,7 +41,7 @@ const MonsterSpecies = {
     Crab: ['Rock', 'Rock Dangerous', 'Lava', 'Lava Dangerous', 'Iridium', 'Truffle', 'Stickbug', 'Magma Cap'],
 };
 const PetSpecies = {
-    Cat: ['Black', 'Gray', 'Orange', 'White', 'Yellow', 'Purple'],
+    Cat: ['Black', 'Gray', 'Orange', 'White', 'Yellow', 'Purple', 'Black and White'],
     Dog: ['Blonde', 'Gray', 'Brown', 'Dark Brown', 'Light Brown', 'Purple'],
     Turtle: ['Green', 'Purple'],
     Dino: [],

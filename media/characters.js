@@ -917,6 +917,9 @@ class Cat extends PetCharacterBig {
             case 'purple':
                 config.spriteSheetOffset = new Vec2(640, 0);
                 break;
+            case 'black and white':
+                config.spriteSheetOffset = new Vec2(768, 0);
+                break;
         }
 
         //Create pet

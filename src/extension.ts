@@ -18,7 +18,7 @@ const MonsterSpecies: { [key: string]: string[] } = {
 }
 
 const PetSpecies: { [key: string]: string[] } = {
-    Cat:        ['Black', 'Gray', 'Orange', 'White', 'Yellow', 'Purple'],
+    Cat:        ['Black', 'Gray', 'Orange', 'White', 'Yellow', 'Purple', 'Black and White'],
     Dog:        ['Blonde', 'Gray', 'Brown', 'Dark Brown', 'Light Brown', 'Purple'],
     Turtle:     ['Green', 'Purple'],
     Dino:       [],
