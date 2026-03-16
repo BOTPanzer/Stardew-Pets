@@ -1,5 +1,14 @@
+import { Vec2, Util } from './util';
+import { Action, Cursor, Menus, DecorAction, DecorMode, Game } from './engine';
+import { Cat, Dog, Raccoon, Dino, Duck, Turtle, Goat, Sheep, Ostrich, Pig, Rabbit, Chicken, Cow, Parrot, Junimo } from './entities/pets';
+import { DecorationPresets, Decoration } from './entities/decoration';
+import { Slime, Bug, Crab, Golem } from './entities/monsters';
+
+
+
 //VSCode API
 const vscode = acquireVsCodeApi()
+
 
 
  /*$$$$$$$                              /$$     /$$
@@ -40,7 +49,7 @@ function toggleActionDecor() {
 }
 
 //Store menu
-function createStoreItem(name, price) {
+function createStoreItem(name: string, price: number = 0) {
     //Item element
     const element = document.createElement('div');
     element.classList.add('menuButton', 'storeButton');
@@ -51,7 +60,7 @@ function createStoreItem(name, price) {
     element.append(text);
 
     //Add price to text
-    if (typeof price === 'number') text.innerHTML += `<br><span class="storeButtonMoney" ${price > Game.money ? 'expensive' : ''}>${price}G</span>`;
+    if (price > 0) text.innerHTML += `<br><span class="storeButtonMoney" ${price > Game.money ? 'expensive' : ''}>${price}G</span>`;
 
     //Return element
     return element;
@@ -59,7 +68,7 @@ function createStoreItem(name, price) {
 
 function openStoreMenu() {
     //Empty list
-    const content = document.getElementById('storeContent');
+    const content = document.getElementById('store-content') as HTMLElement;
     content.innerHTML = '';
 
     //Add back button
@@ -68,7 +77,7 @@ function openStoreMenu() {
     content.appendChild(back);
 
     //Create decoration categories
-    for (const category of Object.keys(DecorationPreset)) {
+    for (const category of Object.keys(DecorationPresets)) {
         //Create item element
         const element = createStoreItem(category);
         element.onclick = () => openStoreCategoryMenu(category);
@@ -78,14 +87,14 @@ function openStoreMenu() {
     //Scroll to top
     content.scrollTop = 0;
     setTimeout(() => { content.scrollTop = 0; }, 0); //Scroll on a timer to wait until elements are rendered
-    
+
     //Show store menu
     Menus.toggle('store', true);
 }
 
-function openStoreCategoryMenu(category) {
+function openStoreCategoryMenu(category: string) {
     //Empty list
-    const content = document.getElementById('storeContent');
+    const content = document.getElementById('store-content') as HTMLElement;
     content.innerHTML = '';
 
     //Add back button
@@ -94,9 +103,9 @@ function openStoreCategoryMenu(category) {
     content.appendChild(back);
 
     //Create category items
-    for (const name of Object.keys(DecorationPreset[category])) {
+    for (const name of Object.keys(DecorationPresets[category])) {
         //Get decoration preset
-        const preset = DecorationPreset[category][name];
+        const preset = DecorationPresets[category][name];
 
         //Create item element
         const element = createStoreItem(preset.name, preset.price);
@@ -134,8 +143,8 @@ function openStoreCategoryMenu(category) {
             DecorMode.toggle(true);
 
             //Center decoration with mouse & start dragging it
-            const decorCenterRelativePos = decor.size.mult(0.5);
-            decor.moveTo(decor.snapPos(Cursor.posScaled.sub(decorCenterRelativePos)));
+            const decorCenterRelativePos = decor.size.multiply(0.5);
+            decor.moveTo(decor.snapPos(Cursor.posScaled.subtract(decorCenterRelativePos)));
             decor.startDragging(decorCenterRelativePos);
 
             //Notify decor added
@@ -154,6 +163,20 @@ function openStoreCategoryMenu(category) {
     setTimeout(() => { content.scrollTop = 0; }, 0); //Scroll on a timer to wait until elements are rendered
 }
 
+//Register events (general)
+document.getElementById('menus')!.onclick = () => Menus.close()
+
+//Register events (actions)
+document.getElementById('action-ball')!.onclick = toggleActionBall
+document.getElementById('action-gift')!.onclick = toggleActionGift
+document.getElementById('action-store')!.onclick = openStoreMenu
+document.getElementById('action-decor')!.onclick = toggleActionDecor
+
+//Register events (decor mode)
+document.getElementById('decor-action')!.onclick = () => DecorMode.toggleAction()
+document.getElementById('decor-exit')!.onclick = () => DecorMode.toggle(false)
+
+
 
  /*$       /$$             /$$
 | $$      |__/            | $$
@@ -165,7 +188,7 @@ function openStoreCategoryMenu(category) {
 |________/|__/|_______/    \___/   \_______/|__/  |__/ \_______/|__/      |______*/
 
 //Messages from VSCode
-window.addEventListener('message', event => {
+window.addEventListener('message', (event) => {
     //The JSON data sent by the extension
     const message = event.data;
 
@@ -179,20 +202,10 @@ window.addEventListener('message', event => {
         case 'init':
             document.body.removeAttribute('hide');
             break;
-    
+
         //Reset game
         case 'reset':
-            //Remove pets
-            for (const pet of Game.pets) Game.objects.removeItem(pet);
-            Game.pets = [];
-
-            //Remove decor
-            for (const decor of Game.decoration) Game.objects.removeItem(decor);
-            Game.decoration = [];
-
-            //Close menus & exit decor mode
-            Menus.close();
-            DecorMode.toggle(false);
+            Game.reset();
             break;
 
         //Init money
@@ -223,9 +236,9 @@ window.addEventListener('message', event => {
                     Game.setScale(2);
                     break;
             }
-            document.body.style.setProperty('--scale', Game.scale);
+            document.body.style.setProperty('--scale', `${Game.scale}`);
             break;
-    
+
         //Update monsters toggle
         case 'monsters':
             //Clear monsters
@@ -299,15 +312,15 @@ window.addEventListener('message', event => {
             }
             break;
         }
-        
+
         case 'spawn_decor': {
             const pos = new Vec2(message.x, message.y)
             const category = message.category.toUpperCase().replaceAll(' ', '_');
             const name = message.name.toUpperCase().replaceAll(' ', '_');
-            new Decoration(DecorationPreset[category][name], { pos: pos });
+            new Decoration(DecorationPresets[category][name], { pos: pos });
             break;
         }
-        
+
         case 'spawn_monster': {
             const specie = message.specie.toLowerCase();
             const color = message.color.toLowerCase();
@@ -346,13 +359,13 @@ window.addEventListener('message', event => {
             Menus.toggle('actions');
 
             //Scroll to the top
-            document.getElementById('actionsContent').scrollTop = 0;
+            document.getElementById('actions-content')!.scrollTop = 0;
             break;
     }
 })
 
 //Cursor events
-document.body.onmousedown = event => {
+document.body.onmousedown = (event) => {
     //Menu open -> Ignore click
     if (Menus.current) return;
 
@@ -372,7 +385,7 @@ document.body.onmousedown = event => {
                 const obj = Game.objects[i];
 
                 //Check if its decoration
-                if (!obj.isDecoration) continue;
+                if (!(obj as Decoration).isDecoration) continue;
 
                 //Check event
                 if (obj.checkMouseDown(pos)) break;
@@ -382,7 +395,7 @@ document.body.onmousedown = event => {
     }
 }
 
-document.body.onmouseup = event => {
+document.body.onmouseup = (event) => {
     //Menu open -> Ignore click
     if (Menus.current) return;
 
@@ -396,13 +409,13 @@ document.body.onmouseup = event => {
             //Check decor action
             switch (DecorMode.action) {
                 //Move
-                case DecorMode.ACTION_MOVE:
+                case DecorAction.MOVE:
                     //Stop moving all
                     for (const decoration of Game.decoration) decoration.stopDragging();
                     break;
 
                 //Sell
-                case DecorMode.ACTION_SELL:
+                case DecorAction.SELL:
                     //Sort objects
                     Game.sortObjects();
 
@@ -412,7 +425,7 @@ document.body.onmouseup = event => {
                         const obj = Game.objects[i];
 
                         //Check if its decoration
-                        if (!obj.isDecoration) continue;
+                        if (!(obj as Decoration).isDecoration) continue;
 
                         //Check event
                         if (obj.checkMouseUp(pos)) break;
@@ -425,7 +438,7 @@ document.body.onmouseup = event => {
         //Place ball
         case Action.BALL: {
             //Move ball
-            Game.ball.moveTo(pos.sub(Game.ball.size.mult(0.5, 1).toInt()));
+            Game.ball.moveTo(pos.subtract(Game.ball.size.multiply(new Vec2(0.5, 1)).toInt()));
             Game.ball.setActive(true);
 
             //Move all pets towards ball
@@ -456,20 +469,21 @@ document.body.onmouseup = event => {
     }
 }
 
-document.onmousemove = event => {
+document.onmousemove = (event) => {
     //Mouse moved -> Update cursor position
     Cursor.moveTo(new Vec2(event.clientX, event.clientY))
 }
 
-document.onmouseenter = event => {
+document.onmouseenter = (event) => {
     //Mouse entered screen -> Show cursor
     Cursor.setIcon(Game.action)
 }
 
-document.onmouseleave = event => {
+document.onmouseleave = (event) => {
     //Mouse left screen -> Hide cursor
     Cursor.setIcon(Action.NONE)
 }
+
 
 
  /*$
@@ -485,7 +499,7 @@ document.onmouseleave = event => {
                               |_*/
 
 //Start game loop
-Game.start();
+Game.start(vscode);
 
 //Tell VSCode the game was loaded
 vscode.postMessage({ type: 'init' })

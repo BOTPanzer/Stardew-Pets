@@ -1,3 +1,11 @@
+import { Vec2, Timeout, Util } from './util';
+import { type PetCharacter } from './entities/pets';
+import { type Decoration } from './entities/decoration';
+import { type MonsterCharacter } from './entities/monsters';
+import { AIState, PetAIState } from './entities/states';
+
+
+
  /*$   /$$   /$$     /$$ /$$
 | $$  | $$  | $$    |__/| $$
 | $$  | $$ /$$$$$$   /$$| $$
@@ -7,102 +15,17 @@
 |  $$$$$$/  |  $$$$/| $$| $$
  \______/    \___/  |__/|_*/
 
-//Classes
-class Vec2 {
-
-    //Position
-    x = 0;
-    y = 0;
-
-    //Constructor
-    constructor(x, y) {
-        //Init from Vec2
-        if (typeof x == 'object') {
-            y = x.y;
-            x = x.x;
-        }
-
-        //Init from numbers
-        this.x = typeof x == 'number' ? x : 0;
-        this.y = typeof y == 'number' ? y : this.x;
-    }
-
-    //Functions
-    clone() {
-        return new Vec2(this.x, this.y);
-    }
-
-    equals(v) {
-        return this.x == v.x && this.y == v.y;
-    }
-
-    add(n) {
-        if (typeof n === 'object')
-            return new Vec2(this.x + n.x, this.y + n.y);
-        else
-            return new Vec2(this.x + n, this.y + n);
-    }
-
-    sub(n) {
-        if (typeof n === 'object')
-            return new Vec2(this.x - n.x, this.y - n.y);
-        else
-            return new Vec2(this.x - n, this.y - n);
-    }
-
-    mult(n) {
-        if (typeof n === 'object')
-            return new Vec2(this.x * n.x, this.y * n.y);
-        else
-            return new Vec2(this.x * n, this.y * n);
-    }
-
-    div(n) {
-        if (typeof n === 'object')
-            return new Vec2(this.x / n.x, this.y / n.y);
-        else
-            return new Vec2(this.x / n, this.y / n);
-    }
-
-    mod(n) {
-        if (typeof n === 'object')
-            return new Vec2(this.x % n.x, this.y % n.y);
-        else
-            return new Vec2(this.x % n, this.y % n);
-    }
-
-    toInt() {
-        return new Vec2(Math.floor(this.x), Math.floor(this.y));
-    }
-
-    toIntRound() {
-        return new Vec2(Math.round(this.x), Math.round(this.y));
-    }
-
-    toIntCeil() {
-        return new Vec2(Math.ceil(this.x), Math.ceil(this.y));
-    }
-
-    toString() {
-        return `(${this.x}, ${this.y})`;
-    }
-
-}
-
-class Timer {
+export class Timer {
 
     //Info
-    #active = false;
-    #end = 0;
+    #active: boolean = false;
+    #end: number = 0;
 
     get justFinished() { return this.#active && Game.frames == this.#end; }
     get finished() { return this.#active && Game.frames >= this.#end; }
 
-    //Constructor
-    constructor() { }
-
     //Functions
-    count(frames) {
+    count(frames: number) {
         this.#active = true;
         this.#end = Game.frames + frames;
     }
@@ -113,80 +36,6 @@ class Timer {
 
 }
 
-class Timeout {
-
-    //Info
-    #fun;
-    #timeout;
-
-    //Constructor
-    constructor(fun, duration) {
-        this.#fun = fun;
-        if (typeof duration === 'number') this.wait(duration);
-    }
-
-    //Functions
-    wait(duration) {
-        this.stop();
-        this.#timeout = setTimeout(this.#fun, duration);
-    }
-
-    stop() {
-        clearTimeout(this.#timeout);
-    }
-
-}
-
-class Util {
-
-    static randomExclusive(max) {
-        //Random number from 0 to max exclusive
-        return Math.floor(Math.random() * (max));
-    }
-
-    static randomInclusive(max) {
-        //Random number from 0 to max inclusive
-        return Math.floor(Math.random() * (max + 1));
-    }
-
-    static clamp(number, min, max) {
-        //Clamp number between min a max
-        return Math.min(Math.max(number, min), max);
-    }
-
-    static moveTowards(current, target, delta) {
-        //Get distance
-        const diff = target - current;
-        const distance = Math.abs(diff);
-
-        //Move towards target
-        return (distance < delta ? target : current + diff / distance * delta)
-    }
-        
-    static titleCase(str) {
-        const parts = str.toLowerCase().split(' ');
-        for (var i = 0; i < parts.length; i++) parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].substring(1);
-        return parts.join(' ');
-    }
-
-}
-
-//Array extensions
-Array.prototype.removeAt = function(index) {
-    const elem = this[index];
-    this.splice(index, 1);
-    return elem;
-}
-
-Array.prototype.removeItem = function(elem) {
-    const index = this.indexOf(elem);
-    this.splice(index, 1);
-    return index;
-}
-
-Array.prototype.isEmpty = function() {
-    return this.length == 0;
-}
 
 
   /*$$$$$              /$$     /$$
@@ -199,37 +48,35 @@ Array.prototype.isEmpty = function() {
 |__/  |__/ \_______/   \___/  |__/ \______/ |__/  |__/|______*/
 
 //Actions
-class Action {
-
-    static get NONE() { return ''; }
-    static get GIFT() { return 'gift'; }
-    static get BALL() { return 'ball'; }
-    static get DECOR() { return 'decor'; }
-
+export enum Action {
+    NONE = '',
+    GIFT = 'gift',
+    BALL = 'ball',
+    DECOR = 'decor'
 }
 
 //Cursor
-class Cursor {
+export class Cursor {
 
     //Cursor HTML element
-    static #element = document.getElementById('cursor');
+    static #element: HTMLElement = document.getElementById('cursor') as HTMLElement;
 
     //Position
-    static #pos = new Vec2();
+    static #pos: Vec2 = new Vec2();
 
     static get pos() { return this.#pos; }
-    static get posScaled() { return Cursor.pos.div(Game.scale).toInt(); }
+    static get posScaled() { return Cursor.pos.divide(Game.scale).toInt(); }
 
-    static moveTo(pos) {
+    static moveTo(pos: Vec2) {
         this.#pos = pos;
         this.#element.style.left = `${pos.x}px`;
         this.#element.style.top =  `${pos.y}px`;
     }
 
     //Icon
-    static #icons = [Action.BALL, Action.GIFT];
+    static #icons = [Action.BALL, Action.GIFT]
 
-    static setIcon(icon) {
+    static setIcon(icon: Action) {
         //Valid icons
         icon = this.#icons.includes(icon) ? icon : Action.NONE;
 
@@ -243,6 +90,7 @@ class Cursor {
 }
 
 
+
  /*$      /$$
 | $$$    /$$$
 | $$$$  /$$$$  /$$$$$$  /$$$$$$$  /$$   /$$  /$$$$$$$
@@ -253,20 +101,20 @@ class Cursor {
 |__/     |__/ \_______/|__/  |__/ \______/ |______*/
 
 //Menus
-class Menus {
+export class Menus {
 
     //Black semitransparent menus backdrop
-    static #backdrop = document.getElementById('menus');
+    static #backdrop: HTMLElement = document.getElementById('menus') as HTMLElement;
 
     //Toggle menus
-    static #current; //Name of the currently open menu
+    static #current: string | null //Name of the currently open menu
 
-    static get current() { return this.#current; }
+    static get current(): string | null { return this.#current; }
 
-    static toggle(name, show) {
+    static toggle(name: string | null, show: boolean | null = null) {
         //Invalid name
         if (typeof name !== 'string') return;
-        
+
         //Get menu
         const menu = document.getElementById(name);
         if (!menu) return;
@@ -293,7 +141,7 @@ class Menus {
         } else {
             //Hide menu
             menu.removeAttribute('show');
-            this.#current = undefined;
+            this.#current = null;
             this.#backdrop.removeAttribute('show');
         }
     }
@@ -305,48 +153,51 @@ class Menus {
 }
 
 //Decor mode
-class DecorMode {
+export enum DecorAction {
+    MOVE = 'move',
+    SELL = 'sell'
+}
+
+export class DecorMode {
 
     //Actions
-    static get ACTION_MOVE() { return 'move'; }
-    static get ACTION_SELL() { return 'sell'; }
+    static #action: DecorAction = DecorAction.MOVE;
 
-    static #action = DecorMode.ACTION_MOVE;
+    static get action(): DecorAction { return this.#action; }
 
-    static get action() { return this.#action; }
-
-    static isAction(action) { 
+    static isAction(action: DecorAction) { 
         return this.action == action;
     }
 
-    static setAction(action) {
+    static setAction(action: DecorAction) {
         switch (action) {
-            case DecorMode.ACTION_MOVE:
+            case DecorAction.MOVE:
                 this.#actionButton.innerText = 'Sell';
                 this.#helpText.innerText = 'Drag to move';
-                break;
-            case DecorMode.ACTION_SELL:
+                break
+            case DecorAction.SELL:
                 this.#actionButton.innerText = 'Move';
                 this.#helpText.innerText = 'Click to sell';
-                break;
+                break
         }
         this.#action = action;
     }
 
     static toggleAction() {
-        if (this.isAction(DecorMode.ACTION_MOVE))
-            this.setAction(DecorMode.ACTION_SELL);
-        else
-            this.setAction(DecorMode.ACTION_MOVE);
+        if (this.isAction(DecorAction.MOVE)) {
+            this.setAction(DecorAction.SELL);
+        } else {
+            this.setAction(DecorAction.MOVE);
+        }
     }
 
     //UI
-    static #overlay = document.getElementById('decor');
-    static #helpText = document.getElementById('decorHelp');
-    static #actionButton = document.getElementById('decorAction');
-    static #actionsToggleButton = document.getElementById('actionsDecor');
+    static #overlay: HTMLElement = document.getElementById('decor') as HTMLElement;
+    static #helpText: HTMLElement = document.getElementById('decor-help') as HTMLElement;
+    static #actionButton: HTMLElement = document.getElementById('decor-action-name') as HTMLElement;
+    static #actionsToggleButton: HTMLElement = document.getElementById('actionsDecor') as HTMLElement;
 
-    static showOverlay(show) {
+    static showOverlay(show: boolean | null = null) {
         //Fix args
         if (typeof show !== 'boolean') show = !this.#overlay.hasAttribute('show');
 
@@ -361,7 +212,7 @@ class DecorMode {
     }
 
     //Mode
-    static toggle(show) {
+    static toggle(show: boolean | null = null) {
         //Fix args
         if (typeof show !== 'boolean') show = !Game.isAction(Action.DECOR);
 
@@ -374,7 +225,7 @@ class DecorMode {
             }
 
             //Set action to move decor
-            this.setAction(DecorMode.ACTION_MOVE);
+            this.setAction(DecorAction.MOVE);
 
             //Enter decor mode
             Game.setAction(Action.DECOR);
@@ -390,6 +241,7 @@ class DecorMode {
 }
 
 
+
   /*$$$$$                                     /$$$$$$  /$$                                 /$$
  /$$__  $$                                   /$$__  $$| $$                                | $$
 | $$  \__/  /$$$$$$  /$$$$$$/$$$$   /$$$$$$ | $$  \ $$| $$$$$$$  /$$  /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
@@ -403,41 +255,45 @@ class DecorMode {
                                                            \_____*/
 
 //Animations
-class Animation {
+type AnimationFrame = [number, number]
+
+interface Animations {
+    [key: string]: Animation
+}
+
+export class Animation {
 
     //Animation info (temporal)
-    #frame = 0;
-    #counter = 0;
-    #finished = false;
+    #frame: number = 0;
+    #counter: number = 0;
+    #finished: boolean = false;
 
-    get finished() { return this.#finished; };
+    get finished(): boolean { return this.#finished; }
 
     //Animation info (permanent)
-    #frames = [];
-    #speed = 5;   //Duration of each frame
+    #frames: AnimationFrame[] = [];
+    #speed: number = 5;             //Duration of each frame
 
     //Animation options
-    #loop = true;           //Loop animation
-    #flip = false;          //Flip sprite
-    #pixelOffset = false;   //Use pixels instead of object size for the offset
+    #loop: boolean = true;          //Loop animation
+    #flip: boolean = false;         //Flip sprite
+    #pixelOffset: boolean = false;  //Use pixels instead of object size for the offset
 
-    get loop() { return this.#loop; };
-    get flip() { return this.#flip; };
-    get pixelOffset() { return this.#pixelOffset; };
+    get loop(): boolean { return this.#loop; }
+    get flip(): boolean { return this.#flip; }
+    get pixelOffset(): boolean { return this.#pixelOffset; }
 
 
     //State
-    constructor(frames, speed, config) {
+    constructor(frames: AnimationFrame[], speed: number, config: any = {}) {
         //Animation info
         this.#frames = frames;
         this.#speed = speed;
 
         //Check config
-        if (typeof config === 'object') {
-            if (typeof config.loop === 'boolean') this.#loop = config.loop;
-            if (typeof config.flip === 'boolean') this.#flip = config.flip;
-            if (typeof config.pixelOffset === 'boolean') this.#pixelOffset = config.pixelOffset;
-        }
+        if (typeof config.loop === 'boolean') this.#loop = config.loop;
+        if (typeof config.flip === 'boolean') this.#flip = config.flip;
+        if (typeof config.pixelOffset === 'boolean') this.#pixelOffset = config.pixelOffset;
 
         //Reset current info
         this.reset();
@@ -481,52 +337,52 @@ class Animation {
 }
 
 //Game objects
-class GameObject {
+export class GameObject {
 
     //Object
-    #active = true;
-    #name = 'GameObject';
+    #active: boolean = true;
+    #name: string = 'GameObject';
 
-    get active() { return this.#active; }
-    get name() { return this.#name; }
+    get active(): boolean { return this.#active; }
+    get name(): string { return this.#name; }
 
     //Position & Size
-    #pos = new Vec2();
-    #size = new Vec2(16);
+    #pos: Vec2 = new Vec2();
+    #size: Vec2 = new Vec2(16);
 
-    get pos() { return this.#pos; }
-    get size() { return this.#size; }
+    get pos(): Vec2 { return this.#pos; }
+    get size(): Vec2 { return this.#size; }
 
     //Clicks
-    #clickable = true;
+    #clickable: boolean = true;
 
-    get clickable() { return this.#clickable; }
+    get clickable(): boolean { return this.#clickable; }
 
     //Rendering (sorting)
-    #sortingLayer = 0;
+    #sortingLayer: number = 0;
 
-    get sortingLayer() { return this.#sortingLayer; }
-    get sortingOrder() { return this.pos.y + this.size.y; }
+    get sortingLayer(): number { return this.#sortingLayer; }
+    get sortingOrder(): number { return this.pos.y + this.size.y; }
 
     //Rendering (sprite sheet)
-    #image = new Image();               //Image containing the sprite sheet
-    #spriteOffset = new Vec2();         //Offset for sprites inside a sprite sheet
-    #spriteSheetOffset = new Vec2();    //Offset for images with multiple sprite sheets
+    #image: HTMLImageElement = new Image();     //Image containing the sprite sheet
+    #spriteOffset: Vec2 = new Vec2();           //Offset for sprites inside a sprite sheet
+    #spriteSheetOffset: Vec2 = new Vec2();      //Offset for images with multiple sprite sheets
 
-    get image() { return this.#image; }
-    get spriteOffset() { return this.#spriteOffset; }
-    get spriteSheetOffset() { return this.#spriteSheetOffset; }
+    get image(): HTMLImageElement { return this.#image; }
+    get spriteOffset(): Vec2 { return this.#spriteOffset; }
+    get spriteSheetOffset(): Vec2 { return this.#spriteSheetOffset; }
 
     //Animations
-    #animations = {};                   //Object of animations with their names as keys
-    #animation;                         //Currently selected animation
+    #animations: Animations = {};               //Object of animations with their names as keys
+    #animation: Animation | null = null;        //Currently selected animation
 
-    get animations() { return this.#animations; }
-    get animation() { return this.#animation; }
+    get animations(): Animations { return this.#animations; }
+    get animation(): Animation | null { return this.#animation; }
 
 
     //Constructor
-    constructor(config = {}) {
+    constructor(config: any = {}) {
         //Check config
         if (typeof config === 'object') {
             //Object
@@ -561,10 +417,7 @@ class GameObject {
         Game.objects.removeItem(this);
     }
 
-    setActive(active) {
-        //Invalid value
-        if (typeof active !== 'boolean') return;
-
+    setActive(active: boolean) {
         //Set active
         this.#active = active;
     }
@@ -572,11 +425,11 @@ class GameObject {
     //Update
     update() {
         //Update animation sprite offset
-        if (this.#animation) this.#spriteOffset = this.#animation.update().mult(this.#animation.pixelOffset ? new Vec2(1) : this.size);
+        if (this.#animation) this.#spriteOffset = this.#animation.update().multiply(this.#animation.pixelOffset ? new Vec2(1) : this.size);
     }
 
     //Clicks
-    isValidMousePos(pos) {
+    isValidMousePos(pos: Vec2) {
         //Not clickable
         if (!this.clickable) return false;
 
@@ -590,14 +443,14 @@ class GameObject {
         return true;
     }
 
-    isPosInBounds(pos) {
+    isPosInBounds(pos: Vec2) {
         //Return true if pos is inside bounding box
         return pos.x >= this.pos.x && pos.x <= this.pos.x + this.size.x && pos.y >= this.pos.y && pos.y <= this.pos.y + this.size.y;
     }
 
-    isPosInSprite(pos, canvas, ctx) {
+    isPosInSprite(pos: Vec2, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
         //Get relative click position
-        const relPos = pos.sub(this.pos);  
+        const relPos = pos.subtract(this.pos);  
 
         //Change canvas size to match object size
         canvas.width = this.size.x;
@@ -612,7 +465,7 @@ class GameObject {
         return pixelData[3] !== 0;
     }
 
-    checkMouseDown(clickPos) {
+    checkMouseDown(clickPos: Vec2) {
         //Check if mouse pos is valid
         if (!this.isValidMousePos(clickPos)) return false;
         
@@ -620,7 +473,7 @@ class GameObject {
         return this.mouseDown(clickPos);
     }
 
-    checkMouseUp(clickPos) {
+    checkMouseUp(clickPos: Vec2) {
         //Check if mouse pos is valid
         if (!this.isValidMousePos(clickPos)) return false;
         
@@ -628,18 +481,18 @@ class GameObject {
         return this.mouseUp(clickPos);
     }
     
-    mouseDown(pos) {
+    mouseDown(pos: Vec2) {
         //Mouse down was consumed
         return true;
     }
 
-    mouseUp(pos) {
+    mouseUp(pos: Vec2) {
         //Mouse up was consumed
         return true;
     }
 
     //Rendering
-    draw(ctx, options = {}) {
+    draw(ctx: CanvasRenderingContext2D, options: any = {}) {
         //Get info
         const pos = (typeof options.pos === 'object' ? options.pos : this.pos);
 
@@ -654,7 +507,7 @@ class GameObject {
             ctx.translate(this.size.x, 0);
             ctx.scale(-1, 1);
         }
-        
+
         //Draw sprite
         ctx.drawImage(
             this.image,     //Image
@@ -673,7 +526,7 @@ class GameObject {
     }
 
     //Animations
-    animate(name, force) {
+    animate(name: string, force: boolean = false) {
         //Not an animation
         if (typeof this.animations[name] !== 'object') return;
 
@@ -687,7 +540,7 @@ class GameObject {
         //Change current animation & reset it
         if (animation == this.animation && !force) return;
         this.#animation = animation;
-        this.animation.reset();
+        this.animation?.reset();
     }
 
     //Movement
@@ -695,7 +548,7 @@ class GameObject {
     get maxPosY() { return Math.floor(Game.windowSizeScaled.y - this.size.y); }
     get randomPoint() { return new Vec2(Util.randomInclusive(this.maxPosX), Util.randomInclusive(this.maxPosY)); }
 
-    moveTo(pos, options = {}) {
+    moveTo(pos: Vec2, options: any = {}) {
         //Clamp new position
         if (!options.ignoreWalls) {
             pos.x = Util.clamp(pos.x, 0, this.maxPosX);
@@ -720,10 +573,10 @@ class GameObject {
 }
 
 //Ball object
-class Ball extends GameObject {
+export class Ball extends GameObject {
 
     //Constructor
-    constructor(config = {}) {
+    constructor(config: any = {}) {
         //Object
         config.active = false;
         config.name = 'Ball';
@@ -743,7 +596,7 @@ class Ball extends GameObject {
         super(config);
     }
 
-    setActive(active) {
+    setActive(active: boolean) {
         super.setActive(active);
 
         //Bounce
@@ -754,8 +607,8 @@ class Ball extends GameObject {
     onReached() {
         //Tell pets to stop moving towards the ball
         for (const pet of Game.pets) {
-            if (pet.ai.state == PetAI.MOVE_BALL) {
-                pet.ai.setState(AI.IDLE);
+            if (pet.ai.state == PetAIState.MOVE_BALL) {
+                pet.ai.setState(AIState.IDLE);
             }
         }
 
@@ -764,6 +617,7 @@ class Ball extends GameObject {
     }
 
 }
+
 
 
  /*$$$$$$$                     /$$
@@ -778,26 +632,28 @@ class Ball extends GameObject {
                     |  $$$$$$/
                      \_____*/
 
-class Game {
+export class Game {
+
+    //VSCode
+    static #vscode: any;
+
+    static get vscode(): any { return this.#vscode; }
 
     //Media folder URI
-    static #mediaURI = document.body.getAttribute('media');
+    static #mediaURI: string = document.body.getAttribute('media')!;
 
-    static get mediaURI() { return this.#mediaURI; }
+    static get mediaURI(): string { return this.#mediaURI; }
 
     //Window
-    static #scale = 2;
-    static #windowSize = new Vec2(window.innerWidth, window.innerHeight);
-    static #windowSizeScaled = new Vec2(window.innerWidth / 2, window.innerHeight / 2);
+    static #scale: number = 2;
+    static #windowSize: Vec2 = new Vec2(window.innerWidth, window.innerHeight);
+    static #windowSizeScaled: Vec2 = new Vec2(window.innerWidth / 2, window.innerHeight / 2);
 
-    static get scale() { return this.#scale; }
-    static get windowSize() { return this.#windowSize; }
-    static get windowSizeScaled() { return this.#windowSizeScaled; }
+    static get scale(): number { return this.#scale; }
+    static get windowSize(): Vec2 { return this.#windowSize; }
+    static get windowSizeScaled(): Vec2 { return this.#windowSizeScaled; }
 
-    static setScale = (scale) => {
-        //Invalid value
-        if (typeof scale !== 'number') return;
-
+    static setScale = (scale: number) => {
         //Update scale
         this.#scale = scale;
         this.onResize();
@@ -806,7 +662,7 @@ class Game {
     static onResize = () => {
         //Update game window size
         this.#windowSize = new Vec2(window.innerWidth, window.innerHeight);
-        this.#windowSizeScaled = this.windowSize.div(this.scale);
+        this.#windowSizeScaled = this.windowSize.divide(this.scale);
 
         //Update buffer canvas size
         this.canvasBuffer.width = this.windowSize.x;
@@ -818,11 +674,11 @@ class Game {
     }
 
     //Update
-    static #fps = 30;    //Game framerate
-    static #frames = 0;  //Frames since game start
+    static #fps: number = 30;    //Game framerate
+    static #frames: number = 0;  //Frames since game start
 
-    static get fps() { return this.#fps }
-    static get frames() { return this.#frames }
+    static get fps(): number { return this.#fps; }
+    static get frames(): number { return this.#frames; }
 
     static update = () => {
         //Check if window size changed
@@ -845,21 +701,21 @@ class Game {
     }
 
     //Rendering
-    static #background = document.getElementById('background');
-    static #canvas = document.getElementById('canvas');         //Real canvas
-    static #canvasBuffer = document.createElement('canvas');    //Double buffer rendering (to prevent flickers after resizing the screen)
-    static #canvasAlphaTest = document.createElement('canvas'); //Used to check for clicks in transparent pixels
-    static #context;
-    static #contextBuffer;
-    static #contextAlphaTest;
+    static #background: HTMLElement = document.getElementById('background') as HTMLElement;
+    static #canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;         //Real canvas
+    static #canvasBuffer: HTMLCanvasElement = document.createElement('canvas') as HTMLCanvasElement;    //Double buffer rendering (to prevent flickers after resizing the screen)
+    static #canvasAlphaTest: HTMLCanvasElement = document.createElement('canvas') as HTMLCanvasElement; //Used to check for clicks in transparent pixels
+    static #context: CanvasRenderingContext2D;
+    static #contextBuffer: CanvasRenderingContext2D;
+    static #contextAlphaTest: CanvasRenderingContext2D;
 
-    static get background() { return this.#background; }
-    static get canvas() { return this.#canvas; }
-    static get canvasBuffer() { return this.#canvasBuffer; }
-    static get canvasAlphaTest() { return this.#canvasAlphaTest; }
-    static get context() { return this.#context; }
-    static get contextBuffer() { return this.#contextBuffer; }
-    static get contextAlphaTest() { return this.#contextAlphaTest; }
+    static get background(): HTMLElement { return this.#background; }
+    static get canvas(): HTMLCanvasElement { return this.#canvas; }
+    static get canvasBuffer(): HTMLCanvasElement { return this.#canvasBuffer; }
+    static get canvasAlphaTest(): HTMLCanvasElement { return this.#canvasAlphaTest; }
+    static get context(): CanvasRenderingContext2D { return this.#context; }
+    static get contextBuffer(): CanvasRenderingContext2D { return this.#contextBuffer; }
+    static get contextAlphaTest(): CanvasRenderingContext2D { return this.#contextAlphaTest; }
 
     static draw = () => {
         //Clear canvas
@@ -877,7 +733,7 @@ class Game {
             if (!obj.active) continue;
 
             //Check if in decor mode and object is not decor
-            if (inDecorMode && !obj.isDecoration) continue;
+            if (inDecorMode && !(obj as Decoration).isDecoration) continue;
 
             //Draw object
             obj.draw(this.contextBuffer);
@@ -890,12 +746,12 @@ class Game {
     }
 
     //Game objects
-    static #objects = [];    //List of all the game objects (gets sorted every frame to check clicks and render back-to-front)
-    static #ball;            //Pets ball object, gets init later
-    static #pets = [];       //List of all the pets       (do not sort, positions must be the same as in extension.ts)
-    static #decoration = []; //List of all the decoration (do not sort, positions must be the same as in extension.ts)
-    static #monsters = [];   //List of all the monsters
-    static #monsterSpawner = new Timeout(() => vscode.postMessage({ type: 'spawn_monster' }));
+    static #objects: GameObject[] = [];         //List of all the game objects (gets sorted every frame to check clicks and render back-to-front)
+    static #ball: Ball;                         //Pets ball object, gets init later
+    static #pets: PetCharacter[] = [];          //List of all the pets       (do not sort, positions must be the same as in extension.ts)
+    static #decoration: Decoration[] = [];      //List of all the decoration (do not sort, positions must be the same as in extension.ts)
+    static #monsters: MonsterCharacter[] = [];  //List of all the monsters
+    static #monsterSpawner: Timeout = new Timeout(() => this.vscode.postMessage({ type: 'spawn_monster' }));
 
     static get objects() { return this.#objects; }
     static get ball() { return this.#ball; }
@@ -910,35 +766,35 @@ class Game {
     }
 
     //Money
-    static #money = 0;
-    static #moneyText = document.getElementById('moneyText');
+    static #money: number = 0;
+    static #moneyText: HTMLElement = document.getElementById('money-text') as HTMLElement;
 
-    static get money() { return this.#money; }
+    static get money(): number { return this.#money; }
 
-    static setMoney = (amount) => {
+    static setMoney = (amount: number) => {
         this.#money = amount;
         this.#moneyText.innerText = `${amount}G`;
     }
 
-    static addMoney = (amount) => {
+    static addMoney = (amount: number) => {
         this.setMoney(this.money + amount);
         this.showMessage(`${amount >= 0 ? '+' : '-'}${Math.abs(amount)}G`);
-        vscode.postMessage({ 
+        this.vscode.postMessage({ 
             type: 'money', 
             value: this.money 
         });
     }
 
     //Current action being performed
-    static #action = Action.NONE;
+    static #action: Action = Action.NONE;
 
-    static get action() { return this.#action; };
+    static get action(): Action { return this.#action; };
 
-    static isAction = (action) => { 
+    static isAction = (action: Action) => { 
         return this.action == action;
     }
 
-    static setAction = (action) => {
+    static setAction = (action: Action) => {
         //Update action & cursor
         this.#action = action;
         Cursor.setIcon(action);
@@ -949,24 +805,26 @@ class Game {
     }
 
     //Messages
-    static showMessage = (content, isLong = false) => {
+    static #messages: HTMLElement = document.getElementById('messages') as HTMLElement
+
+    static showMessage = (content: string, isLong = false) => {
         //Create message element
         const message = document.createElement('span');
         message.classList.add('message');
         message.innerText = content;
         if (isLong) message.setAttribute('long', '');
-        document.getElementById('messages').appendChild(message);
+        this.#messages.appendChild(message);
 
         //Set timeout to remove message element
         setTimeout(() => message.remove(), isLong ? 3000 : 2000);
     }
 
     //Game loop
-    static #deltaAccumulation = 0;
-    static #lastFrameTimestamp;
-    static #animationFrame;
+    static #deltaAccumulation: number = 0;
+    static #lastFrameTimestamp: number;
+    static #animationFrame: number;
 
-    static gameLoop = (timestamp) => {
+    static gameLoop = (timestamp: number) => {
         //Check if last frame timestamp is init
         if (!this.#lastFrameTimestamp) this.#lastFrameTimestamp = timestamp;
 
@@ -988,11 +846,14 @@ class Game {
         this.#animationFrame = requestAnimationFrame(this.gameLoop);
     }
 
-    static start = () => {
+    static start = (vscode: any) => {
+        //Save vscode ref
+        this.#vscode = vscode
+
         //Init canvas contexts
-        this.#context = this.canvas.getContext('2d');
-        this.#contextBuffer = this.canvasBuffer.getContext('2d', { willReadFrequently: true });
-        this.#contextAlphaTest = this.canvasAlphaTest.getContext('2d', { willReadFrequently: true });
+        this.#context = this.canvas.getContext('2d')!;
+        this.#contextBuffer = this.canvasBuffer.getContext('2d', { willReadFrequently: true })!;
+        this.#contextAlphaTest = this.canvasAlphaTest.getContext('2d', { willReadFrequently: true })!;
 
         //Create ball
         this.#ball = new Ball();
@@ -1000,6 +861,20 @@ class Game {
         //Start game loop
         cancelAnimationFrame(this.#animationFrame);
         this.#animationFrame = requestAnimationFrame(this.gameLoop);
+    }
+
+    static reset = () => {
+        //Remove pets
+        for (const pet of Game.pets) Game.objects.removeItem(pet);
+        this.#pets = [];
+
+        //Remove decor
+        for (const decor of Game.decoration) Game.objects.removeItem(decor);
+        this.#decoration = [];
+
+        //Close menus & exit decor mode
+        Menus.close();
+        DecorMode.toggle(false);
     }
 
 }

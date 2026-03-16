@@ -1,250 +1,8 @@
-//AI
-class AI {
+import { Vec2, Timeout, Util } from '../util';
+import { Action, Animation, Game } from '../engine';
+import { Character, AI } from './characters';
+import { AIState, PetAIState } from './states';
 
-    //States
-    static get IDLE() { return 'idle' };
-    static get MOVE() { return 'move' };
-    static get SPECIAL() { return 'special' };
-
-    //AI info
-    #character;
-    #state = AI.IDLE;
-    #timer = new Timer();
-    #movePos = new Vec2();
-    
-    get character() { return this.#character; }
-    get state() { return this.#state; }
-    get timer() { return this.#timer; }
-
-    //Config (idle)
-    #idleDurationBase = 2 * Game.fps;       //Minimum duration of idle (in frames)
-    #idleDurationVariation = 2 * Game.fps;  //Variation of duration for idle (in frames)
-
-    get idleDuration() { return this.#idleDurationBase + Util.randomInclusive(this.#idleDurationVariation); }
-
-    //Config (sleep)
-    #canSleep = true;
-    #isSleeping = false;
-    #sleepDurationBase = 10 * Game.fps;     //Minimum duration of sleep (in frames)
-    #sleepDurationVariation = 5 * Game.fps; //Variation of duration for sleep (in frames)
-
-    get sleepDuration() { return this.#sleepDurationBase + Util.randomInclusive(this.#sleepDurationVariation); }
-
-    //Config (special)
-    #specialDuration = 2 * Game.fps;        //Duration of special (in frames)
-
-    get specialDuration() { return this.#specialDuration; }
-
-
-    //Constructor
-    constructor(config) {
-        //No config
-        if (typeof config !== 'object') return;
-
-        //Idle config
-        if (typeof config.idleDurationBase == 'number') this.#idleDurationBase = config.idleDurationBase;
-        if (typeof config.idleDurationVariation == 'number') this.#idleDurationVariation = config.idleDurationVariation;
-
-        //Sleep config
-        if (typeof config.canSleep == 'boolean') this.#canSleep = config.canSleep;
-        if (typeof config.sleepDurationBase == 'number') this.#sleepDurationBase = config.sleepDurationBase;
-        if (typeof config.sleepDurationVariation == 'number') this.#sleepDurationVariation = config.sleepDurationVariation;
-
-        //Special config
-        if (typeof config.specialDuration == 'number') this.#specialDuration = config.specialDuration;
-    }
-
-    assign(character) {
-        //Assign character 
-        this.#character = character;
-    }
-
-    //Click
-    click() {}
-
-    //Movement
-    _moveTowardsMovePos() {
-        //Move position out of bounds -> Create a new one
-        if (this.#movePos.x > this.character.maxPosX || this.#movePos.y > this.character.maxPosY) {
-            this.moveTowards(this.character.randomPoint);
-            return true
-        }
-
-        //Try to move
-        if (this.#movePos.x < this.character.pos.x)
-            return this.moveLeft();
-        else if (this.#movePos.x > this.character.pos.x)
-            return this.moveRight();
-        else if (this.#movePos.y < this.character.pos.y)
-            return this.moveUp();
-        else if (this.#movePos.y > this.character.pos.y)
-            return this.moveDown();
-        else
-            return false
-    }
-
-    moveTowards(point) {
-        //Change move point
-        this.#movePos = point;
-
-        //Set state to moving
-        this.setState(AI.MOVE);
-    }
-
-    moveTowardsRandom() {
-        //Move towards random point
-        this.moveTowards(this.character.randomPoint);
-    }
-
-    moveLeft() {
-        this.character.animate('moveLeft');
-        return this.character.moveTo(new Vec2(this.character.pos.x - 1, this.character.pos.y));
-    }
-
-    moveRight() {
-        this.character.animate('moveRight');
-        return this.character.moveTo(new Vec2(this.character.pos.x + 1, this.character.pos.y));
-    }
-
-    moveUp() {
-        this.character.animate('moveUp');
-        return this.character.moveTo(new Vec2(this.character.pos.x, this.character.pos.y - 1));
-    }
-
-    moveDown() {
-        this.character.animate('moveDown');
-        return this.character.moveTo(new Vec2(this.character.pos.x, this.character.pos.y + 1));
-    }
-
-    //State
-    update() {
-        //Run on update for current state
-        const onUpdate = this[`onUpdate_${this.state}`];
-        if (typeof onUpdate === 'function') onUpdate.call(this);
-    }
-
-    setState(newState) {
-        //Not a valid state
-        if (typeof newState !== 'string') return;
-
-        //Run on end for old state
-        const onEnd = this[`onEnd_${this.state}`];
-        if (typeof onEnd === 'function') onEnd.call(this);
-
-        //Set state
-        this.#state = newState;
-
-        //Run on start for new state
-        const onStart = this[`onStart_${this.state}`];
-        if (typeof onStart === 'function') onStart.call(this);
-    }
-
-    //State: IDLE
-    onStart_idle() {
-        //Animate idle
-        this.character.animate('idle');
-
-        //Start timer
-        this.timer.count(this.idleDuration);
-
-        //Reset sleeping
-        this.#isSleeping = false;
-    }
-
-    onUpdate_idle() {
-        //Timer didn't finish
-        if (!this.timer.finished) return;
-
-        //Reset timer
-        this.timer.reset();
-
-        //Check action (75% chance to sleep if it can)
-        if (this.#canSleep && !this.#isSleeping && Util.randomExclusive(100) < 75) {
-            //Animate sleep
-            this.character.animate('sleep');
-
-            //Set state to sleep-idle
-            this.#isSleeping = true;
-
-            //Start sleep timer
-            this.timer.count(this.sleepDuration);
-        } else {
-            //Move towards a random point
-            this.moveTowardsRandom();
-        }
-    }
-
-    //State: MOVE
-    onUpdate_move() {
-        //Try to move
-        if (this._moveTowardsMovePos()) return;
-
-        //Didn't move -> Point reached, animate idle
-        this.setState(AI.IDLE);
-    }
-
-    //State: SPECIAL
-    onStart_special() {
-        //Animate special
-        this.character.animate('special', true);
-
-        //Start timer to move again
-        this.timer.count(this.specialDuration);
-    }
-
-    onUpdate_special() {
-        //Timer didn't finish
-        if (!this.timer.finished) return;
-
-        //Reset timer
-        this.timer.reset();
-
-        //Move towards a random point
-        this.moveTowardsRandom();
-    }
-
-}
-
-//Characters
-class Character extends GameObject {
-
-    //Object
-    get isCharacter() { return true; }
-
-    //AI
-    #ai;
-
-    get ai() { return this.#ai; }
-
-
-    //Constructor
-    constructor(config, ai) {
-        super(config);
-
-        //Assign AI
-        this.#ai = ai
-        ai.assign(this)
-
-        //Respawn character
-        this.respawn();
-    }
-
-    //Update
-    update() {
-        //Update AI
-        this.ai.update();
-
-        //Update game object
-        super.update();
-    }
-
-    //Click
-    onclick() {
-        //Notify AI a click happened
-        this.ai.onclick();
-    }
-
-}
 
 
  /*$$$$$$             /$$
@@ -293,9 +51,9 @@ class PetAnimations {
                 5,
                 { loop: false }
             ),
-        } 
-    };
-    
+        }
+    }
+
     static get CAT() { 
         return {
             'idle': new Animation(
@@ -337,7 +95,7 @@ class PetAnimations {
             ],
         };
     }
-        
+
     static get DOG() { 
         return {
             'idle': new Animation(
@@ -696,46 +454,43 @@ class PetAnimations {
 class PetMoods {
 
     //Sprite size
-    static size = new Vec2(9);
+    static size: Vec2 = new Vec2(9);
 
     //Special moods
     static get HEART() { return new Vec2(1, 3); }
-    static get RANDOM() { return PetMoods[PetMoods.#moods[Util.randomExclusive(PetMoods.#moods.length)]]; }
+    static get RANDOM() { return (PetMoods as any)[PetMoods.#moods[Util.randomExclusive(PetMoods.#moods.length)]]; }
 
     //Normal moods
-    static #moods = ['HAPPY', 'BLUSH', 'ASHAMED', 'CRY', 'MAD', 'IDK', 'PLEDGE', 'GIGACHAD', 'ALIEN', 'DEVIL', 'SILLY', 'MUSIC'];
+    static #moods: string[] = ['HAPPY', 'BLUSH', 'ASHAMED', 'CRY', 'MAD', 'IDK', 'PLEDGE', 'GIGACHAD', 'ALIEN', 'DEVIL', 'SILLY', 'MUSIC'];
 
-    static get HAPPY() { return new Vec2(0, 0); }
-    static get BLUSH() { return new Vec2(8, 0); }
-    static get ASHAMED() { return new Vec2(9, 0); }
-    static get CRY() { return new Vec2(13, 0); }
-    static get MAD() { return new Vec2(2, 1); }
-    static get IDK() { return new Vec2(5, 1); }
-    static get PLEDGE() { return new Vec2(8, 1); }
-    static get GIGACHAD() { return new Vec2(11, 1); }
-    static get ALIEN() { return new Vec2(1, 2); }
-    static get DEVIL() { return new Vec2(2, 2); }
-    static get SILLY() { return new Vec2(13, 1); }
-    static get MUSIC() { return new Vec2(6, 3); }
+    static get HAPPY(): Vec2 { return new Vec2(0, 0); }
+    static get BLUSH(): Vec2 { return new Vec2(8, 0); }
+    static get ASHAMED(): Vec2 { return new Vec2(9, 0); }
+    static get CRY(): Vec2 { return new Vec2(13, 0); }
+    static get MAD(): Vec2 { return new Vec2(2, 1); }
+    static get IDK(): Vec2 { return new Vec2(5, 1); }
+    static get PLEDGE(): Vec2 { return new Vec2(8, 1); }
+    static get GIGACHAD(): Vec2 { return new Vec2(11, 1); }
+    static get ALIEN(): Vec2 { return new Vec2(1, 2); }
+    static get DEVIL(): Vec2 { return new Vec2(2, 2); }
+    static get SILLY(): Vec2 { return new Vec2(13, 1); }
+    static get MUSIC(): Vec2 { return new Vec2(6, 3); }
 
 }
 
-class PetAI extends AI {
-
-    //States
-    static get MOVE_BALL() { return 'moveball' };
+export class PetAI extends AI {
 
     //Moods
-    #moodSprite = new Image();
-    #moodOffset = new Vec2();
-    #moodElevation = 0; //Elevation is inverted, positive is down, negative is up
-    #moodShow = false;
-    #moodHideTimeout = new Timeout(() => this.#moodShow = false);
-    #moodHeartTimeout = new Timeout(() => this.#setRandomMood());
+    #moodSprite: HTMLImageElement = new Image();
+    #moodOffset: Vec2 = new Vec2();
+    #moodElevation: number = 0; //Elevation is inverted, positive is down, negative is up
+    #moodShow: boolean = false;
+    #moodHideTimeout: Timeout = new Timeout(() => this.#moodShow = false);
+    #moodHeartTimeout: Timeout = new Timeout(() => this.#setRandomMood());
 
 
     //State
-    constructor(config) {
+    constructor(config: any) {
         super(config);
 
         //Check config
@@ -766,12 +521,12 @@ class PetAI extends AI {
         this.showMood();
 
         //Play special animation
-        this.setState(AI.SPECIAL);
+        this.setState(AIState.SPECIAL);
     }
 
     //Mood
-    #setMood(moodOffset) {
-        this.#moodOffset = moodOffset.mult(PetMoods.size);
+    #setMood(moodOffset: Vec2) {
+        this.#moodOffset = moodOffset.multiply(PetMoods.size);
     }
 
     #setHeartMood() {
@@ -795,7 +550,7 @@ class PetAI extends AI {
         this.#moodHideTimeout.wait(2000);
     }
 
-    drawMood(ctx) {
+    drawMood(ctx: CanvasRenderingContext2D) {
         //Mood is hidden
         if (!this.#moodShow) return;
 
@@ -814,11 +569,11 @@ class PetAI extends AI {
     }
 
     //Movement
-    moveTowards(point, towardsBall) {
+    moveTowards(point: Vec2, towardsBall: boolean = false) {
         super.moveTowards(point)
 
         //Move towards ball
-        if (towardsBall) this.setState(PetAI.MOVE_BALL);
+        if (towardsBall) this.setState(PetAIState.MOVE_BALL);
     }
 
     //State: MOVING or MOVING_BALL
@@ -834,24 +589,24 @@ class PetAI extends AI {
         this.showMood();
 
         //Animate special
-        this.setState(AI.SPECIAL);
+        this.setState(AIState.SPECIAL);
     }
 
 }
 
 //Characters
-class PetCharacter extends Character {
+export class PetCharacter extends Character<PetAI> {
 
     //Pet info
-    #specie = '';
-    #color = 'Color';
+    #specie: string = '';
+    #color: string = 'Color';
 
-    get specie() { return this.#specie; }
-    get color() { return this.#color; }
-    
+    get specie(): string { return this.#specie; }
+    get color(): string { return this.#color; }
+
 
     //Constructor
-    constructor(name, specie, color, config = {}, config_ai = {}) {
+    constructor(name: string, specie: string, color: string, config: any = {}, config_ai: any = {}) {
         //Add name & image to config
         config.name = name;
         config.image = `pets/${specie.toLowerCase()}.png`;
@@ -878,7 +633,7 @@ class PetCharacter extends Character {
     }
 
     //Clicks
-    mouseUp(pos) {
+    mouseUp(pos: Vec2) {
         //Notify AI pet was clicked
         this.ai.click();
 
@@ -887,41 +642,41 @@ class PetCharacter extends Character {
     }
 
     //Rendering
-    draw(ctx, options) {
+    draw(ctx: CanvasRenderingContext2D, options: any) {
         //Draw character
         super.draw(ctx, options);
-        
+
         //Draw AI mood
         this.ai.drawMood(ctx);
     }
 
     //Movement
-    moveTowardsBall(ballPos) {
+    moveTowardsBall(ballPos: Vec2) {
         //Fix position to have the pet feet at the ball
-        const pos = ballPos.sub(this.size.mult(new Vec2(0.5, 0.8)).toInt())
+        const pos = ballPos.subtract(this.size.multiply(new Vec2(0.5, 0.8)).toInt());
 
         //Clamp new position
         pos.x = Util.clamp(pos.x, 0, this.maxPosX);
         pos.y = Util.clamp(pos.y, 0, this.maxPosY);
 
         //Update position
-        this.ai.moveTowards(pos, true)
+        this.ai.moveTowards(pos, true);
     }
 
 }
 
 //Cat
-class Cat extends PetCharacter {
+export class Cat extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.CAT
         };
 
         //AI config
-        const config_ai = {
+        const config_ai: any = {
             moodElevation: -3
         };
 
@@ -955,17 +710,17 @@ class Cat extends PetCharacter {
 }
 
 //Dog
-class Dog extends PetCharacter {
+export class Dog extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.DOG
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1003,17 +758,17 @@ class Dog extends PetCharacter {
 }
 
 //Tutle
-class Turtle extends PetCharacter {
+export class Turtle extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.TURTLE
         };
 
         //AI config
-        const config_ai = {
+        const config_ai: any = {
             moodElevation: -2
         };
 
@@ -1035,17 +790,17 @@ class Turtle extends PetCharacter {
 }
 
 //Dino
-class Dino extends PetCharacter {
+export class Dino extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(16),
             animations: PetAnimations.DINO
         };
 
         //AI config
-        const config_ai = {
+        const config_ai: any = {
             moodElevation: 10
         };
 
@@ -1056,17 +811,17 @@ class Dino extends PetCharacter {
 }
 
 //Duck
-class Duck extends PetCharacter {
+export class Duck extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(16),
             animations: PetAnimations.DUCK
         };
 
         //AI config
-        const config_ai = {
+        const config_ai: any = {
             moodElevation: 8
         };
 
@@ -1077,17 +832,17 @@ class Duck extends PetCharacter {
 }
 
 //Raccoon
-class Raccoon extends PetCharacter {
+export class Raccoon extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.RACCOON
         };
 
         //AI config
-        const config_ai = {
+        const config_ai: any = {
             moodElevation: 4,
             canSleep: false
         };
@@ -1099,17 +854,17 @@ class Raccoon extends PetCharacter {
 }
 
 //Goat, sheep, ostrich, pig
-class Goat extends PetCharacter {
+export class Goat extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.DEFAULT
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1130,17 +885,17 @@ class Goat extends PetCharacter {
 
 }
 
-class Sheep extends PetCharacter {
+export class Sheep extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.DEFAULT
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1160,17 +915,17 @@ class Sheep extends PetCharacter {
 
 }
 
-class Ostrich extends PetCharacter {
+export class Ostrich extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.DEFAULT
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1191,17 +946,17 @@ class Ostrich extends PetCharacter {
 
 }
 
-class Pig extends PetCharacter {
+export class Pig extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.DEFAULT
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1223,16 +978,16 @@ class Pig extends PetCharacter {
 }
 
 //Rabbit
-class Rabbit extends PetCharacter {
+export class Rabbit extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             animations: PetAnimations.RABBIT
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1254,17 +1009,17 @@ class Rabbit extends PetCharacter {
 }
 
 //Chicken
-class Chicken extends PetCharacter {
+export class Chicken extends PetCharacter {
     
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(16),
             animations: PetAnimations.CHICKEN
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1310,17 +1065,17 @@ class Chicken extends PetCharacter {
 }
 
 //Cow
-class Cow extends PetCharacter {
+export class Cow extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(32),
             animations: PetAnimations.COW
         };
 
         //AI config
-        const config_ai = {};
+        const config_ai: any = {};
 
         //Color sprite sheet offset
         switch (color.toLowerCase()) {
@@ -1350,17 +1105,17 @@ class Cow extends PetCharacter {
 }
 
 //Parrot
-class Parrot extends PetCharacter {
+export class Parrot extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(24),
             animations: PetAnimations.PARROT
         };
 
         //AI config
-        const config_ai = {
+        const config_ai: any = {
             canSleep: false
         };
 
@@ -1396,17 +1151,17 @@ class Parrot extends PetCharacter {
 }
 
 //Junimo
-class Junimo extends PetCharacter {
+export class Junimo extends PetCharacter {
 
-    constructor(name, color) {
+    constructor(name: string, color: string) {
         //Object config
-        const config = {
+        const config: any = {
             size: new Vec2(16),
             animations: PetAnimations.JUNIMO
         };
 
         //AI config
-        const config_ai = {
+        const config_ai: any = {
             moodElevation: 9
         };
 
@@ -1450,375 +1205,6 @@ class Junimo extends PetCharacter {
 
         //Create pet
         super(name, 'junimo', color, config, config_ai);
-    }
-
-}
-
-
- /*$$$$$$$                                   /$$
-| $$_____/                                  |__/
-| $$       /$$$$$$$   /$$$$$$  /$$$$$$/$$$$  /$$  /$$$$$$   /$$$$$$$
-| $$$$$   | $$__  $$ /$$__  $$| $$_  $$_  $$| $$ /$$__  $$ /$$_____/
-| $$__/   | $$  \ $$| $$$$$$$$| $$ \ $$ \ $$| $$| $$$$$$$$|  $$$$$$
-| $$      | $$  | $$| $$_____/| $$ | $$ | $$| $$| $$_____/ \____  $$
-| $$$$$$$$| $$  | $$|  $$$$$$$| $$ | $$ | $$| $$|  $$$$$$$ /$$$$$$$/
-|________/|__/  |__/ \_______/|__/ |__/ |__/|__/ \_______/|______*/
-
-//Animations
-class MonsterAnimations {
-
-    static get SLIME() { 
-        return {
-            'idle': new Animation(
-                [[0, 0]],
-                4,
-                { loop: false },
-            ),
-            'moveDown': new Animation(
-                [[0, 0], [1, 0], [2, 0], [3, 0]],
-                4,
-            ),
-            'moveRight': new Animation(
-                [[0, 1], [1, 1], [2, 1], [3, 1]],
-                4,
-            ),
-            'moveLeft': new Animation(
-                [[0, 2], [1, 2], [2, 2], [3, 2]],
-                4,
-            ),
-            'moveUp': new Animation(
-                [[0, 3], [1, 3], [2, 3], [3, 3]],
-                4,
-            ),
-            'special': new Animation(
-                [[0, 4], [1, 4], [2, 4]],
-                4,
-                { loop: false },
-            ),
-        } 
-    };
-
-    static get BUG() { 
-        return {
-            'idle': new Animation(
-                [[0, 0], [1, 0], [2, 0], [3, 0]],
-                4,
-            ),
-            'moveDown': new Animation(
-                [[0, 0], [1, 0], [2, 0], [3, 0]],
-                4,
-            ),
-            'moveRight': new Animation(
-                [[0, 1], [1, 1], [2, 1], [3, 1]],
-                4,
-            ),
-            'moveLeft': new Animation(
-                [[0, 3], [1, 3], [2, 3], [3, 3]],
-                4,
-            ),
-            'moveUp': new Animation(
-                [[0, 2], [1, 2], [2, 2], [3, 2]],
-                4,
-            ),
-            'special': new Animation(
-                [[0, 4], [1, 4]],
-                4,
-                { loop: false },
-            ),
-        } 
-    };
-
-    static get GOLEM() { 
-        return {
-            'idle': new Animation(
-                [[0, 0]],
-                4,
-                { loop: false },
-            ),
-            'moveDown': new Animation(
-                [[0, 0], [1, 0], [2, 0], [3, 0]],
-                4,
-            ),
-            'moveRight': new Animation(
-                [[0, 1], [1, 1], [2, 1], [3, 1]],
-                4,
-            ),
-            'moveLeft': new Animation(
-                [[0, 3], [1, 3], [2, 3], [3, 3]],
-                4,
-            ),
-            'moveUp': new Animation(
-                [[0, 2], [1, 2], [2, 2], [3, 2]],
-                4,
-            ),
-            'special': new Animation(
-                [[0, 6], [1, 6]],
-                4,
-                { loop: false },
-            ),
-        } 
-    };
-
-    static get CRAB() { 
-        return {
-            'idle': new Animation(
-                [[0, 0]],
-                4,
-                { loop: false },
-            ),
-            'moveDown': new Animation(
-                [[1, 0], [2, 0], [3, 0]],
-                4,
-            ),
-            'moveRight': new Animation(
-                [[1, 1], [2, 1], [3, 1]],
-                4,
-            ),
-            'moveLeft': new Animation(
-                [[1, 2], [2, 2], [3, 2]],
-                4,
-            ),
-            'moveUp': new Animation(
-                [[1, 3], [2, 3], [3, 3]],
-                4,
-            ),
-            'special': new Animation(
-                [[0, 5], [1, 5]],
-                4,
-                { loop: false },
-            ),
-        } 
-    };
-
-}
-
-//AI
-class MonsterAI extends AI {
-
-    //State
-    constructor(config) { 
-        //Fix config & disable sleep
-        if (typeof config !== 'object') config = {};
-        config.canSleep = false;
-        
-        //Base AI
-        super(config); 
-    }
-
-    //Click
-    click() {
-        //Alredy clicked
-        if (this.state == AI.SPECIAL) return;
-
-        //Give money to player
-        Game.addMoney(40 + 5 * Util.randomInclusive(8)); //40 - 80 gold
-
-        //Wait to spawn a new monster
-        Game.monsterSpawner.wait(30 * 1000);
-
-        //Play special animation
-        this.setState(AI.SPECIAL);
-    }
-
-    //State: SPECIAL
-    onEnd_special() {
-        //Remove monster from game
-        this.character.remove();
-    }
-
-}
-
-//Characters
-class MonsterCharacter extends Character {
-
-    //Monster info
-    #specie = '';
-    #color = 'Color';
-
-    get specie() { return this.#specie; }
-    get color() { return this.#color; }
-
-
-    //Constructor
-    constructor(specie, color, config = {}, config_ai = {}) {
-        //Add name & image to config
-        config.name = Util.titleCase(specie);
-        config.image = `monsters/${specie.toLowerCase()}.png`;
-        
-        //Create character
-        super(config, new MonsterAI(config_ai));
-
-        //Save info
-        this.#specie = specie;
-        this.#color = color;
-
-        //Move towards random point
-        this.ai.moveTowardsRandom();
-        
-        //Add to monsters list
-        Game.monsters.push(this);
-    }
-
-    remove() {
-        super.remove();
-
-        //Remove from monsters list
-        Game.monsters.removeItem(this);
-    }
-
-    //Clicks
-    mouseUp(pos) {
-        //Notify AI emeny was clicked
-        this.ai.click();
-
-        //Consume event
-        return true;
-    }
-
-}
-
-//Slime
-class Slime extends MonsterCharacter {
-
-    constructor(color) {
-        //Default config
-        const config = {
-            size: new Vec2(16, 24),
-            animations: MonsterAnimations.SLIME
-        };
-
-        //Color sprite sheet offset
-        switch (color.toLowerCase()) {
-            default:
-            case 'iron':
-                config.spriteSheetOffset = new Vec2();
-                break;
-            case 'tiger':
-                config.spriteSheetOffset = new Vec2(64, 0);
-                break;
-        }
-
-        //Create pet
-        super('slime', color, config, {
-            specialDuration: 0.4 * Game.fps
-        });
-    }
-
-}
-
-//Bug
-class Bug extends MonsterCharacter {
-
-    constructor(color) {
-        //Default config
-        const config = {
-            size: new Vec2(16),
-            animations: MonsterAnimations.BUG
-        };
-
-        //Color sprite sheet offset
-        switch (color.toLowerCase()) {
-            default:
-            case 'normal':
-                config.spriteSheetOffset = new Vec2();
-                break;
-            case 'normal dangerous':
-                config.spriteSheetOffset = new Vec2(64, 0);
-                break;
-            case 'armored':
-                config.spriteSheetOffset = new Vec2(128, 0);
-                break;
-            case 'armored dangerous':
-                config.spriteSheetOffset = new Vec2(192, 0);
-                break;
-        }
-
-        //Create pet
-        super('bug', color, config, {
-            specialDuration: 0.4 * Game.fps
-        });
-    }
-
-}
-
-//Golem
-class Golem extends MonsterCharacter {
-
-    constructor(color) {
-        //Default config
-        const config = {
-            size: new Vec2(16, 24),
-            animations: MonsterAnimations.GOLEM
-        };
-
-        //Color sprite sheet offset
-        switch (color.toLowerCase()) {
-            default:
-            case 'stone':
-                config.spriteSheetOffset = new Vec2();
-                break;
-            case 'stone dangerous':
-                config.spriteSheetOffset = new Vec2(64, 0);
-                break;
-            case 'iridium':
-                config.spriteSheetOffset = new Vec2(128, 0);
-                break;
-            case 'wilderness':
-                config.spriteSheetOffset = new Vec2(192, 0);
-                break;
-        }
-
-        //Create pet
-        super('golem', color, config, {
-            specialDuration: 0.4 * Game.fps
-        });
-    }
-
-}
-
-//Crab
-class Crab extends MonsterCharacter {
-
-    constructor(color) {
-        //Default config
-        const config = {
-            size: new Vec2(16, 24),
-            animations: MonsterAnimations.CRAB
-        };
-
-        //Color sprite sheet offset
-        switch (color.toLowerCase()) {
-            default:
-            case 'rock':
-                config.spriteSheetOffset = new Vec2();
-                break;
-            case 'rock':
-                config.spriteSheetOffset = new Vec2(64, 0);
-                break;
-            case 'lava':
-                config.spriteSheetOffset = new Vec2(128, 0);
-                break;
-            case 'lava':
-                config.spriteSheetOffset = new Vec2(192, 0);
-                break;
-            case 'iridium':
-                config.spriteSheetOffset = new Vec2(256, 0);
-                break;
-            case 'truffle':
-                config.spriteSheetOffset = new Vec2(320, 0);
-                break;
-            case 'stickbug':
-                config.spriteSheetOffset = new Vec2(384, 0);
-                break;
-            case 'magma cap':
-                config.spriteSheetOffset = new Vec2(448, 0);
-                break;
-        }
-
-        //Create pet
-        super('crab', color, config, {
-            specialDuration: 0.4 * Game.fps
-        });
     }
 
 }

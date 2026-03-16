@@ -14,6 +14,7 @@
         <link rel="stylesheet" href="{media}main.css">
 
         <!-- Scripts -->
+        <script src="{media}main.js" type="module"></script>
     </head>
 
     <!-- Content -->
@@ -27,17 +28,17 @@
         <!-- Decor mode -->
         <div id="decor">
             <!-- Controls -->
-            <span id="decorHelp">Drag to move</span>
-            
+            <span id="decor-help">Drag to move</span>
+
             <!-- Toggle action & exit buttons -->
             <div class="decorButtons" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
                 <!-- Toggle action -->
-                <div class="menu" button show onclick="DecorMode.toggleAction();">
-                    <span id="decorAction">Action</span>
+                <div id="decor-action" class="menu" button show>
+                    <span id="decor-action-name">Action</span>
                 </div>
 
                 <!-- Exit decor mode -->
-                <div class="menu" button show onclick="DecorMode.toggle(false);">
+                <div id="decor-exit" class="menu" button show>
                     <span>Exit</span>
                 </div>
             </div>
@@ -47,24 +48,24 @@
         <div id="messages"></div>
 
         <!-- Menus -->
-        <div id="menus" onclick="Menus.close();" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
+        <div id="menus" onmousedown="event.stopPropagation();" onmouseup="event.stopPropagation();">
             <!-- Actions menu -->
             <div id="actions" class="menu" onclick="event.stopPropagation();">
-                <div id="actionsContent" class="menuContent" scrollable>
+                <div id="actions-content" class="menuContent" scrollable>
                     <!-- Buttons -->
-                    <div class="menuButton" onclick="toggleActionBall();">
+                    <div id="action-ball" class="menuButton">
                         <img src="{media}sprites/ui/ball.png">
                         <span>Play with Ball</span>
                     </div>
-                    <div class="menuButton" onclick="toggleActionGift();">
+                    <div id="action-gift" class="menuButton">
                         <img src="{media}sprites/ui/gift.png">
                         <span>Give a Gift</span>
                     </div>
-                    <div class="menuButton" onclick="openStoreMenu();">
+                    <div id="action-store" class="menuButton">
                         <img src="{media}sprites/ui/house.png">
                         <span>General Store</span>
                     </div>
-                    <div class="menuButton" onclick="toggleActionDecor();">
+                    <div id="action-decor" class="menuButton">
                         <img src="{media}sprites/ui/axe.png">
                         <span id="actionsDecor">Enter Decor Mode</span>
                     </div>
@@ -73,24 +74,18 @@
 
             <!-- Store menu -->
             <div id="store" class="menu" onclick="event.stopPropagation();">
-                <div id="storeContent" class="menuContent" scrollable>
+                <div id="store-content" class="menuContent" scrollable>
                     <!-- Items -->
                 </div>
             </div>
 
             <!-- Money menu -->
             <div id="money" class="menu" button show onclick="event.stopPropagation();">
-                <span id="moneyText">0G</span>
+                <span id="money-text">0G</span>
             </div>
         </div>
 
         <!-- Cursor -->
         <div id="cursor"></div>
     </body>
-
-    <!-- Scripts -->
-    <script src="{media}engine.js"></script>
-    <script src="{media}characters.js"></script>
-    <script src="{media}decoration.js"></script>
-    <script src="{media}main.js"></script>
 </html>

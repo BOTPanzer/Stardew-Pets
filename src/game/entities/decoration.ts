@@ -1,16 +1,27 @@
-//Layers & presets
-class DecorationLayer { 
-    
-    static get DEFAULT() { return 0; }
-    static get CUSHIONS() { return -10; }
-    static get RUGS() { return -20; }
+import { Vec2, Util } from '../util';
+import { Action, Cursor, DecorAction, DecorMode, GameObject, Game } from '../engine';
 
+
+
+//Layers & presets
+enum DecorationLayer { 
+    DEFAULT = 0,
+    CUSHIONS = -10,
+    RUGS = -20
 }
 
-class DecorationPreset {
+interface DecorationPreset {
+    name: string
+    size: Vec2
+    spriteOffset: Vec2
+    sortingLayer?: DecorationLayer
+    price: number
+}
+
+export const DecorationPresets: Record<string, Record<string, DecorationPreset>> = {
 
     //Chairs
-    static CHAIRS = {
+    CHAIRS: {
         OAK_CHAIR: {
             name: 'Oak Chair',
             size: new Vec2(16, 32),
@@ -185,9 +196,9 @@ class DecorationPreset {
             spriteOffset: new Vec2(640, 608),
             price: 350, //Invented price
         }
-    }
+    },
 
-    static STOOLS = {
+    STOOLS: {
         GREEN_OFFICE_STOOL: {
             name: 'Green Office Stool',
             size: new Vec2(16, 32),
@@ -236,9 +247,9 @@ class DecorationPreset {
             spriteOffset: new Vec2(640, 848),
             price: 500, //Invented price
         }
-    }
+    },
 
-    static BENCHES = {
+    BENCHES: {
         OAK_BENCH: {
             name: 'Oak Bench',
             size: new Vec2(32, 32),
@@ -269,10 +280,10 @@ class DecorationPreset {
             spriteOffset: new Vec2(320, 96),
             price: 2000,
         }
-    }
+    },
 
     //Tables
-    static TABLES = {
+    TABLES: {
         OAK_TABLE: {
             name: 'Oak Table',
             size: new Vec2(32, 48),
@@ -411,9 +422,9 @@ class DecorationPreset {
             spriteOffset: new Vec2(672, 880),
             price: 1500, //Invented price
         }
-    }
+    },
     
-    static TEA_TABLES = {
+    TEA_TABLES: {
         OAK_TEA_TABLE: {
             name: 'Oak Tea Table',
             size: new Vec2(32),
@@ -468,9 +479,9 @@ class DecorationPreset {
             spriteOffset: new Vec2(576, 912),
             price: 1500, //Invented price
         }
-    }
+    },
 
-    static END_TABLES = {
+    END_TABLES: {
         OAK_END_TABLE: {
             name: 'Oak End Table',
             size: new Vec2(16, 32),
@@ -549,9 +560,9 @@ class DecorationPreset {
             spriteOffset: new Vec2(544, 912),
             price: 1000, //Invented price
         }
-    }
+    },
 
-    static COFFE_TABLES = {
+    COFFE_TABLES: {
         COFFE_TABLE: {
             name: 'Coffe Table',
             size: new Vec2(32),
@@ -582,10 +593,10 @@ class DecorationPreset {
             spriteOffset: new Vec2(656, 1200),
             price: 1250, //Invented price
         }
-    }
+    },
 
     //Rugs
-    static RUGS = {
+    RUGS: {
         BAMBOO_MAT: {
             name: 'Bamboo Mat',
             size: new Vec2(32, 16),
@@ -894,10 +905,10 @@ class DecorationPreset {
             sortingLayer: DecorationLayer.RUGS,
             price: 500, //Invented price
         }
-    }
+    },
 
     //Cushions
-    static CUSHIONS = {
+    CUSHIONS: {
         BLUE_CUSHION: {
             name: 'Blue Cushion',
             size: new Vec2(16),
@@ -996,10 +1007,10 @@ class DecorationPreset {
             sortingLayer: DecorationLayer.CUSHIONS,
             price: 500, //Invented price
         }
-    }
+    },
 
     //Plants
-    static HOUSE_PLANTS = {
+    HOUSE_PLANTS: {
         HOUSE_PLANT_1: {
             name: 'House Plant 1',
             size: new Vec2(16, 32),
@@ -1090,10 +1101,10 @@ class DecorationPreset {
             spriteOffset: new Vec2(112, 688),
             price: 250,
         }
-    }
+    },
 
     //Misc
-    static LARGE_MISC = {
+    LARGE_MISC: {
         STANDING_GEODE: {
             name: 'Standing Geode',
             size: new Vec2(16, 32),
@@ -1196,9 +1207,9 @@ class DecorationPreset {
             spriteOffset: new Vec2(592, 160),
             price: 400, //Invented price
         }
-    }
+    },
 
-    static SMALL_MISC = {
+    SMALL_MISC: {
         BOWL_EMPTY: {
             name: 'Empty Bowl',
             size: new Vec2(16),
@@ -1288,26 +1299,26 @@ class DecorationPreset {
 }
 
 //Decoration object
-class Decoration extends GameObject {
+export class Decoration extends GameObject {
 
     //Object
-    get isDecoration() { return true; }
+    get isDecoration(): boolean { return true; }
 
     //Info
-    #price = 0;
-    
-    get price() { return this.#price; }
+    #price: number = 0;
+
+    get price(): number { return this.#price; }
 
     //Moving
-    #snap = 16; //Snap grid size
-    #moving = false;
-    #movingOffset = new Vec2();
+    #snap: number = 16; //Snap grid size
+    #moving: boolean = false;
+    #movingOffset: Vec2 = new Vec2();
 
-    get moving() { return this.#moving; }
+    get moving(): boolean { return this.#moving; }
 
 
     //Constructor
-    constructor(preset = {}, config = {}) {
+    constructor(preset: any = {}, config: any = {}) {
         //Add image to config
         config.image = `decoration.png`;
 
@@ -1328,7 +1339,7 @@ class Decoration extends GameObject {
         const index = Game.decoration.removeItem(this);
 
         //Notify decor removed
-        vscode.postMessage({
+        Game.vscode.postMessage({
             type: 'remove_decor',
             index: index,
         });
@@ -1343,10 +1354,10 @@ class Decoration extends GameObject {
         super.update();
 
         //Check if moving
-        if (!this.#moving || !DecorMode.isAction(DecorMode.ACTION_MOVE)) return;
+        if (!this.#moving || !DecorMode.isAction(DecorAction.MOVE)) return;
 
         //Calculate new snapped position
-        const mousePos = Cursor.posScaled.sub(this.#movingOffset);
+        const mousePos = Cursor.posScaled.subtract(this.#movingOffset);
         const snappedPos = this.snapPos(mousePos);
 
         //Fix bounds
@@ -1360,7 +1371,7 @@ class Decoration extends GameObject {
         this.moveTo(snappedPos, { ignoreWalls: true });
 
         //Notify position changed
-        vscode.postMessage({
+        Game.vscode.postMessage({
             type: 'move_decor',
             index: Game.decoration.indexOf(this),
             x: snappedPos.x,
@@ -1369,20 +1380,20 @@ class Decoration extends GameObject {
     }
 
     //Click
-    mouseDown(pos) {
+    mouseDown(pos: Vec2) {
         //Check game action
         if (!Game.isAction(Action.DECOR)) return false;
 
         //Check decor action
         switch (DecorMode.action) {
             //Move
-            case DecorMode.ACTION_MOVE:
+            case DecorAction.MOVE:
                 //Start moving
-                this.startDragging(pos.sub(this.pos));
+                this.startDragging(pos.subtract(this.pos));
                 break;
 
             //Sell
-            case DecorMode.ACTION_SELL:
+            case DecorAction.SELL:
                 //Do nothing
                 break;
         }
@@ -1391,20 +1402,20 @@ class Decoration extends GameObject {
         return true;
     }
 
-    mouseUp(pos) {
+    mouseUp(pos: Vec2) {
         //Check game action
         if (!Game.isAction(Action.DECOR)) return false;
 
         //Check decor action
         switch (DecorMode.action) {
             //Move
-            case DecorMode.ACTION_MOVE:
+            case DecorAction.MOVE:
                 //Stop moving
                 this.stopDragging();
                 break;
 
             //Sell
-            case DecorMode.ACTION_SELL:
+            case DecorAction.SELL:
                 //Give money to player (80%)
                 if (typeof this.price === 'number') Game.addMoney(Math.floor(this.price * 0.8));
 
@@ -1418,7 +1429,7 @@ class Decoration extends GameObject {
     }
 
     //Movement
-    startDragging(moveOffset) {
+    startDragging(moveOffset: Vec2) {
         //Start moving
         this.#moving = true;
         this.#movingOffset = moveOffset;
@@ -1429,8 +1440,8 @@ class Decoration extends GameObject {
         this.#moving = false;
     }
 
-    snapPos(pos) {
-        return pos.div(this.#snap).toIntRound().mult(this.#snap);
+    snapPos(pos: Vec2) {
+        return pos.divide(this.#snap).toIntRound().multiply(this.#snap);
     }
 
 }
