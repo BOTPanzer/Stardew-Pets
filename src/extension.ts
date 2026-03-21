@@ -3,10 +3,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 
+
 //Extension
 let config = vscode.workspace.getConfiguration('stardew-pets');
 let webview: WebViewProvider;
 let extensionStorageFolder: string = '';
+
 
 
 //Enums
@@ -36,18 +38,14 @@ const PetSpecies: { [key: string]: string[] } = {
 }
 
 const Names: string[] = [
-    'Alex',     'Laura',
-    'Raúl',     'Ángela',
-    'Aitor',    'Chao',
-    'Álvaro',   'Victor',
-    'Rodri',    'Adri',
-    'Oliva',    'Pablo',
-    'Sara',     'Mar',
-    'David',    'Unai',
-    'Nadia',    'Miriam',
-    'Irene',    'Diana',
-    'Aitana',   'Lucia',
+    'Alex',     'Raúl',     'Aitor',    'Chao',
+    'Mar',      'Sara',     'Pablo',    'Laura',
+    'Ángela',   'David',    'Unai',     'Aitana',
+    'Nadia',    'Miriam',   'Álvaro',   'Victor',
+    'Rodri',    'Adri',     'Oliva',    'Irene',
+    'Lucía',    'Artyom',   'Judy',     'Panam'
 ]
+
 
 
 //Save
@@ -211,11 +209,14 @@ class PetItem implements vscode.QuickPickItem {
     public index: number;
     public label: string;
     public description: string;
+    public iconPath: vscode.Uri;
 
-    constructor(index: number, name: string, description: string) {
+    constructor(context: vscode.ExtensionContext, index: number, specie: string, variant: string, name: string, description: string) {
         this.index = index;
         this.label = name;
         this.description = description;
+        const fileName = (variant === '' ? specie : `${specie}_${variant}`).toLowerCase().replaceAll(' ', '_')
+        this.iconPath = vscode.Uri.file(path.join(context.extensionPath, 'media', 'icons', 'pets', `${fileName}.png`))
     }
 
 }
@@ -265,6 +266,51 @@ function loadDecor(decor: Decoration) {
     });
 }
 
+//Selections
+async function selectPetSpecie(context: vscode.ExtensionContext): Promise<string | null> {
+    //Create items
+    const items = Object.keys(PetSpecies).map(specie => {
+        const variants = PetSpecies[specie]
+        return new PetItem(context, 0, specie, variants.length == 0 ? '' : variants[0], specie, variants.join(', '))
+    });
+
+    //Ask for a specie
+    const item = await vscode.window.showQuickPick(items, {
+        title: 'Select a pet to add',
+        placeHolder: 'Pet'
+    });
+
+    //Return specie
+    return (item == null ? null : item.label);
+}
+
+async function selectPetVariant(context: vscode.ExtensionContext, specie: string): Promise<string | null> {
+    //Create items
+    const items = PetSpecies[specie].map(variant => {
+        //Get adult/baby start index
+        let index = variant.indexOf(' adult');
+        if (index == -1) index = variant.indexOf(' baby');
+
+        //Get name & description
+        let name = (index == -1 ? variant : variant.substring(0, index)).trim();
+        let description = (index == -1 ? '' : variant.substring(index)).trim();
+        return new PetItem(context, 0, specie, variant, name, description);
+    })
+
+    //Check items
+    if (items.length == 0) return '';
+
+    //Ask for a variant
+    const item = await vscode.window.showQuickPick(items, {
+        title: `Select a ${specie.toLowerCase()} variant`,
+        placeHolder: 'Variant',
+    });
+
+    //Return variant
+    return (item == null ? null : `${item.label} ${item.description}`.trim());
+}
+
+
 
   /*$$$$$              /$$     /$$                       /$$
  /$$__  $$            | $$    |__/                      | $$
@@ -295,6 +341,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     //Load save file
     loadGame();
+
 
 
      /*$      /$$           /$$       /$$    /$$ /$$
@@ -339,6 +386,7 @@ export function activate(context: vscode.ExtensionContext) {
     })
 
 
+
       /*$$$$$                                                                  /$$
      /$$__  $$                                                                | $$
     | $$  \__/  /$$$$$$  /$$$$$$/$$$$  /$$$$$$/$$$$   /$$$$$$  /$$$$$$$   /$$$$$$$  /$$$$$$$
@@ -353,48 +401,23 @@ export function activate(context: vscode.ExtensionContext) {
     //Add pet
     const commandAddPet = vscode.commands.registerCommand('stardew-pets.addPet', async () => {
         //Ask for a specie
-        const specie = await vscode.window.showQuickPick(Object.keys(PetSpecies), {
-            title: 'Select a pet',
-            placeHolder: 'Pet',
-        });
+        const specie = await selectPetSpecie(context);
         if (specie == null) return;
 
-
         //Ask for a variant
-        let variants = Array<PetItem>();
-        for (let i = 0; i < PetSpecies[specie].length; i++) {
-            const variant = PetSpecies[specie][i];
-
-            //Get adult/baby start index
-            let index = variant.indexOf(' adult');
-            if (index == -1) index = variant.indexOf(' baby');
-
-            //Get name & description
-            let name = (index == -1 ? variant : variant.substring(0, index)).trim();
-            let description = (index == -1 ? '' : variant.substring(index)).trim();
-            variants.push(new PetItem(i, name, description));
-        }
-        const tmpvariant = variants.length == 0 ? new PetItem(0, '', '') : await vscode.window.showQuickPick(variants, {
-            title: 'Select a variant',
-            placeHolder: 'Variant',
-        });
-        if (tmpvariant == null) return;
-        const variant: string = (tmpvariant.label + ' ' + tmpvariant.description).trim();
-
+        const variant = await selectPetVariant(context, specie);
+        if (variant == null) return;
 
         //Ask for a name
-        const tmpname = Names[Math.floor(Math.random() * Names.length)];
+        const tempName = Names[Math.floor(Math.random() * Names.length)];
         const name = await vscode.window.showInputBox({
             title: 'Choose a name for your pet',
             placeHolder: 'Name',
-            value: tmpname,
-            valueSelection: [0, tmpname.length],
-            validateInput: text => {
-                return text === '' ? 'Please input a name for your pet' : null;
-            }
+            value: tempName,
+            valueSelection: [0, tempName.length],
+            validateInput: text => (text === '' ? 'Please input a name for your pet' : null)
         });
         if (name == null) return;
-
 
         //Add pet
         addPet({
@@ -413,7 +436,7 @@ export function activate(context: vscode.ExtensionContext) {
         let items = Array<PetItem>();
         for (let i = 0; i < save.pets.length; i++) {
             const pet = save.pets[i];
-            items.push(new PetItem(i, pet.name, pet.color + ' ' + pet.specie));
+            items.push(new PetItem(context, i, pet.specie, pet.color, pet.name, pet.color + ' ' + pet.specie));
         }
 
         //Ask for pet
@@ -464,6 +487,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 
+
  /*$$$$$$                                  /$$     /$$                       /$$              
 | $$__  $$                                | $$    |__/                      | $$              
 | $$  \ $$  /$$$$$$   /$$$$$$   /$$$$$$$ /$$$$$$   /$$ /$$    /$$ /$$$$$$  /$$$$$$    /$$$$$$ 
@@ -476,6 +500,7 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
     console.log('Stardew Pets is now deactivated 😿')
 }
+
 
 
  /*$      /$$           /$$       /$$    /$$ /$$                        
@@ -553,7 +578,7 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
                         type: 'spawn_monster',
                         specie: specie,
                         color: color,
-                    })
+                    });
                     break;
                 }
 
@@ -609,7 +634,7 @@ export class WebViewProvider implements vscode.WebviewViewProvider {
         const htmlContent = new TextDecoder().decode(fileData);
 
         //Replace media folder URI placeholder with path
-        return htmlContent.replaceAll('{media}', `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`)
+        return htmlContent.replaceAll('{media}', `${webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media'))}/`);
     }
 
 }

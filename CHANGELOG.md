@@ -1,5 +1,14 @@
 # Change Log
 
+## [v2.3.0]
+
+**Tweaks**
+- Improved add/remove pet selection menus to show pet previews
+- Fixed some crab variants that weren’t working
+
+**Engine**
+- Converted all JavaScript code to TypeScript
+
 ## [v2.2.4]
 
 **Tweaks**

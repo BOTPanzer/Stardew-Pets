@@ -2,6 +2,9 @@
 media/main.js
 out/
 
+# Releases
+releases/
+
 # Node.js modules
 node_modules/
 
