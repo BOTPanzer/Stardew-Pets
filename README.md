@@ -30,6 +30,8 @@ You can have pets with custom names to keep you company while coding.
         <li>Rabbits</li>
         <li>Chicken</li>
         <li>Cows</li>
+        <li>Parrots</li>
+        <li>Horses</li>
         <li>Junimos!</li>
     </ul>
 </details>

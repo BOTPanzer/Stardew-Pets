@@ -1,5 +1,10 @@
 # Change Log
 
+## [v2.3.1]
+
+**New**
+- Added horses
+
 ## [v2.3.0]
 
 **Tweaks**

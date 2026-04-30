@@ -692,12 +692,12 @@ export class Game {
             //Not active
             if (!obj.active) continue;
 
-            //Draw object
+            //Update object
             obj.update();
         }
 
         //Draw objects
-        requestAnimationFrame(this.draw);
+        this.draw();
     }
 
     //Rendering

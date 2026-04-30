@@ -1,13 +1,22 @@
 import { Vec2, Util } from './util';
 import { Action, Cursor, Menus, DecorAction, DecorMode, Game } from './engine';
-import { Cat, Dog, Raccoon, Dino, Duck, Turtle, Goat, Sheep, Ostrich, Pig, Rabbit, Chicken, Cow, Parrot, Junimo } from './entities/pets';
+import { Cat, Dog, Raccoon, Dino, Duck, Turtle, Goat, Sheep, Ostrich, Pig, Rabbit, Chicken, Cow, Parrot, Horse, Junimo } from './entities/pets';
 import { DecorationPresets, Decoration } from './entities/decoration';
 import { Slime, Bug, Crab, Golem } from './entities/monsters';
 
 
 
 //VSCode API
-const vscode = acquireVsCodeApi()
+declare global {
+    interface VsCodeApi {
+        postMessage(msg: any): void;
+        getState(): any;
+        setState(value: any): void;
+    }
+    function acquireVsCodeApi(): any;
+}
+
+const vscode: VsCodeApi = acquireVsCodeApi();
 
 
 
@@ -305,6 +314,9 @@ window.addEventListener('message', (event) => {
                     break;
                 case 'parrot':
                     new Parrot(name, color);
+                    break;
+                case 'horse':
+                    new Horse(name, color);
                     break;
                 case 'junimo':
                     new Junimo(name, color);

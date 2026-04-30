@@ -34,6 +34,7 @@ const PetSpecies: { [key: string]: string[] } = {
     Chicken:    ['White Adult', 'White Baby', 'Blue Adult', 'Blue Baby', 'Brown Adult', 'Brown Baby', 'Black Adult', 'Black Baby'],
     Cow:        ['White Adult', 'White Baby', 'Brown Adult', 'Brown Baby'],
     Parrot:     ['Green Adult', 'Green Baby', 'Blue Adult', 'Blue Baby', 'Golden Joja'],
+    Horse:      [],
     Junimo:     ['White', 'Black', 'Gray', 'Pink', 'Red', 'Orange', 'Yellow', 'Green', 'Cyan', 'Purple', 'Brown'],
 }
 

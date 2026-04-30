@@ -9,6 +9,7 @@
             "DOM",
             "DOM.Iterable"
 		],
+        "types": ["node"],
 		"sourceMap": true,
         "allowImportingTsExtensions": true,
         "noEmit": true,
