@@ -1,5 +1,10 @@
 # Change Log
 
+## [v2.3.2]
+
+**Engine**
+- Fixed save file path not working correctly when using WSL
+
 ## [v2.3.1]
 
 **New**

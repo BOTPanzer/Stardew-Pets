@@ -337,7 +337,7 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('Stardew Pets is now active 😽');
 
     //Get extension folder & save file path
-    extensionStorageFolder = context.globalStorageUri.path.substring(1);
+    extensionStorageFolder = context.globalStorageUri.fsPath;
     savePath = path.join(extensionStorageFolder, 'save.json');
 
     //Load save file
